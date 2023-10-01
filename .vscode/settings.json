@@ -1,9 +1,5 @@
 {
     "files.associations": {
-        "stdlib.h": "c",
-        "clocks.h": "c",
-        "pico.h": "c",
-        "types.h": "c",
-        "comdef.h": "c"
+        "*.h": "c"
     }
 }

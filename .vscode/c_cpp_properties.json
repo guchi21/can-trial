@@ -4,8 +4,7 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/home/riru/pico-sdk/**",
-                "${workspaceFolder}/can_driver/include"
+                "${PICO_SDK_PATH}/**"
             ],
             "defines": [],
             "compilerPath": "/usr/bin/gcc",

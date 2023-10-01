@@ -15,7 +15,7 @@ target_link_libraries(can-trial
     pico_stdlib
     hardware_spi
     hardware_clocks
-    can_driver
+    can-driver
 )
 
 pico_sdk_init()
