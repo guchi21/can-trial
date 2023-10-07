@@ -11,17 +11,11 @@ add_library(can-driver STATIC
     ./src/can_driver.c
 )
 
-target_compile_features(can-driver PRIVATE
-    cxx_std_11
-)
+target_compile_features( can-driver PRIVATE cxx_std_11 )
 
 target_include_directories( can-driver PUBLIC include )
 
-set_target_properties(can-driver PROPERTIES
-    VERSION ${PROJECT_VERSION}
-)
-
-target_link_libraries(can-driver PRIVATE
-    pico_stdlib
-    hardware_spi
+target_link_libraries( can-driver
+    PRIVATE pico_stdlib
+    PRIVATE hardware_spi
 )
