@@ -5,20 +5,34 @@
 #include "pico/stdlib.h"
 #endif
 
-enum CAN_FORMAT_KIND {
-    CAN_FORMAT_KIND_INDEX_MIN = 0U,
-    CAN_FORMAT_KIND_STANDARD = CAN_FORMAT_KIND_INDEX_MIN,
-    CAN_FORMAT_KIND_EXTENSION,
-    CAN_FORMAT_KIND_INDEX_MAX = CAN_FORMAT_KIND_EXTENSION
-};
-
-typedef struct {
-    enum CAN_FORMAT_KIND kind;
-    uint32_t id;
-    uint8_t length;
-    uint8_t *content;
-} can_message_t;
-
-bool candrv_initialize();
-
+#ifndef CAN_H
+#include "can.h"
 #endif
+
+/*==================================================================*/
+/* Macro definitions                                                */
+/*==================================================================*/
+#define CANDRV_FAILURE ( 0U )
+#define CANDRV_SUCCESS ( 1U )
+
+
+/*==================================================================*/
+/* Type definitions                                                 */
+/*==================================================================*/
+
+
+/*==================================================================*/
+/* Prototypes                                                       */
+/*==================================================================*/
+
+bool candrv_init();
+bool candrv_set_tx0_msg( const can_message_t *const msg );
+bool candrv_set_tx1_msg( const can_message_t *const msg );
+bool candrv_set_tx2_msg( const can_message_t *const msg );
+bool candrv_req_send_tx0();
+bool candrv_req_send_tx1();
+bool candrv_req_send_tx2();
+bool candrv_get_rx0_msg( can_message_t *const msg );
+bool candrv_get_rx1_msg( can_message_t *const msg );
+
+#endif  /* CAN_DRIVER_H */
