@@ -1,28 +1,34 @@
 #include "can_driver.h"
-#include "mcp2515.h"
-#include "pico/stdlib.h"
-#include "hardware/clocks.h"
-#include <stdio.h>
+
+bool timer_callback( repeating_timer_t *rt ) {
+
+}
 
 int main()
 {
-    const uint16_t id = 0x0390;
-    const uint8_t data[8] = { 0x01, 0x02, 0x03, 0xFF, 0x00, 0x45, 0xEA, 0x55 };
+    candrv_initialize();
 
-    stdio_init_all();
+    static repeating_timer_t timer;
 
-    mcp2515_init();
+    add_repeating_timer_ms( -1, &timer_callback, NULL, &timer );
 
-    mcp2515_set_tx0( id, data );
+    // const uint16_t id = 0x0390;
+    // const uint8_t content[8] = { 0x01, 0x02, 0x03, 0xFF, 0x00, 0x45, 0xEA, 0x55 };
 
-    while(1) {
+    // stdio_init_all();
 
-        if(true == mcp2515_is_ready_tx0()) {
+    // mcp2515_init();
 
-            // sleep_ms(100);
+    // mcp2515_set_tx0( id, content );
 
-            mcp2515_int_tx0_clear();
-            mcp2515_req_tx0_send();
-        }
-    }
+    // while(1) {
+
+    //     if(true == mcp2515_is_ready_tx0()) {
+
+    //         // sleep_ms(100);
+
+    //         mcp2515_int_tx0_clear();
+    //         mcp2515_req_tx0_send();
+    //     }
+    // }
 }

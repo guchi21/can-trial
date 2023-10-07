@@ -19,8 +19,8 @@ target_compile_features(can-trial PRIVATE
     cxx_std_11
 )
 target_include_directories(can-trial PRIVATE
-can_driver/include
-int_manager/include
+    can_driver/include
+    int_manager/include
 )
 
 set_target_properties(can-trial PROPERTIES

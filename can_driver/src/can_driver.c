@@ -6,7 +6,7 @@
 #include "pico_can.h"
 #endif
 
-bool candrv_init() {
+bool candrv_initialize() {
 
     /* Reset CAN controller. */
     if ( false == picocan_reset() ) {
@@ -14,30 +14,46 @@ bool candrv_init() {
         return false;
     }
 
-    clear tec;
-    clear rec;
+    if ( false == picocan_set_tx0_priority( PICOCAN_TX_PRIORITY_LOW ) ) {
+
+        return false;
+    }
+
+    if ( false == picocan_set_tx1_priority( PICOCAN_TX_PRIORITY_MIDDLE_LOW ) ) {
+
+        return false;
+    }
+
+    if ( false == picocan_set_tx2_priority( PICOCAN_TX_PRIORITY_MIDDLE_HIGH ) ) {
+
+        return false;
+    }
+    
+
+    // clear tec;
+    // clear rec;
 
 
-    clear cat stat;
-    clear can ctrl;
-    clear eflg;
+    // clear cat stat;
+    // clear can ctrl;
+    // clear eflg;
 
-    clear caninte;
-    clear can intf;
+    // clear caninte;
+    // clear can intf;
     
 
 
-    clear tx0;
-    clear rx 1;
+    // clear tx0;
+    // clear rx 1;
 
-    set rxf[0-5]
-    set rxm[0-1]
+    // set rxf[0-5]
+    // set rxm[0-1]
 
 
 
 
     // set can rate;
-    if ( false == picocan_set_canrate( CANRATE_1000KBPS ) ) {
+    if ( false == picocan_change_can_baudrate( CAN_BAUDRATE_1000KBPS ) ) {
 
         return false;
     }
@@ -45,5 +61,9 @@ bool candrv_init() {
     // clear registers;
 
 
-    picocan_set_mode( OPMODE_NORMAL );
+    picocan_change_operation_mode( PICOCAN_OPERATION_MODE_NORMAL );
+}
+
+bool clear_tx1buf() {
+    
 }
