@@ -16,8 +16,6 @@
 #define TX_PRIORITY_HIGH            ( 0x03U )
 
 
-/* MCP2515 timeout for write to the register. */
-#define PICOCAN_TIMEOUT_WRITE_REG   ( 1000ULL )
 
 
 /* MCP2515 operation modes. */
@@ -26,7 +24,8 @@
 #define OPR_MODE_LOOPBACK           ( 0x40U )           /* Loop back mode.                  */
 #define OPR_MODE_LISTENONLY         ( 0x60U )           /* Listen only mode.                */
 #define OPR_MODE_CONFIG             ( 0x80U )           /* Config mode.                     */
-
+#define OPR_MODE_INVALID            ( 0xE0U )
+#define TIMEOUTOF_OPR_MODE_CHANGE   ( 1000UL )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -42,5 +41,6 @@
 /* Prototypes                                                       */
 /*==================================================================*/
 
+bool mcp2515_reset_blocking();
 
 #endif /* MCP2515_H */

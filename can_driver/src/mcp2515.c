@@ -30,6 +30,9 @@
 /* Macro definitions                                                */
 /*==================================================================*/
 
+/* MCP2515 timeout for write to the register. */
+#define RESET_TIMEOUT   ( 1000ULL )
+
 /* RP2040 pin voltage. */
 #define PIN_VOLTAGE_LOW             ( 0U )
 #define PIN_VOLTAGE_HIGH            ( 1U )
@@ -94,3 +97,29 @@ const can_baudrate_reg_t can_baudrate_1000kbps = { 0x00U, 0x82U, 0x02U };
 /* Implements.                                                      */
 /*==================================================================*/
 
+bool mcp2515_reset_blocking() {
+
+    const uint32_t begun = time_us_32();
+    uint8_t opr_mode = OPR_MODE_INVALID;
+
+    rp2040_begin_spi_commands();
+
+    rp2040_write_byte_to_spi( SPICMD_RESET );
+
+    rp2040_end_spi_commands();
+
+    do {
+        opr_mode = (uint8_t) ( ★read_byte_from_register( REG_CANSTAT ) & MASKOF_CANSTAT_OPMOD );
+
+        const uint32_t current = time_us_32();
+        const uint32_t elapsed = ( current < begun ) ? ( UINT64_VALUE_MAX - begun + current + 1ULL ) : ( current - begun );
+
+        if ( elapsed > ★PICOCAN_TIMEOUT_WRITE_REG ) {
+
+            return CANDRV_FAILURE;
+        }
+
+    } while ( OPR_MODE_CONFIG != opr_mode )
+
+    return CANDRV_SUCCESS;
+}
