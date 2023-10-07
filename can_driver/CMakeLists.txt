@@ -18,5 +18,6 @@ target_include_directories( can_driver PUBLIC include )
 target_link_libraries( can_driver
     PRIVATE pico_stdlib
     PRIVATE hardware_spi
+    PRIVATE hardware_sync
     PRIVATE com_lib
 )
