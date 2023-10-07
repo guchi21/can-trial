@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required( VERSION 3.12 )
 
-project(can-driver
+project( can-driver
     VERSION 1.0.0
     DESCRIPTION "CAN driver"
-    LANGUAGES CXX
+    LANGUAGES CXX C ASM
 )
 
 add_library(can-driver STATIC
@@ -15,9 +15,7 @@ target_compile_features(can-driver PRIVATE
     cxx_std_11
 )
 
-target_include_directories(can-driver PRIVATE
-    ./include
-)
+target_include_directories( can-driver PUBLIC include )
 
 set_target_properties(can-driver PROPERTIES
     VERSION ${PROJECT_VERSION}
@@ -26,5 +24,4 @@ set_target_properties(can-driver PROPERTIES
 target_link_libraries(can-driver PRIVATE
     pico_stdlib
     hardware_spi
-    int-manager
 )
