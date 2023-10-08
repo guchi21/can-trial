@@ -6,7 +6,7 @@ bool timer_callback( repeating_timer_t *rt ) {
 
 int main()
 {
-    candrv_initialize();
+    candrv_init();
 
     static repeating_timer_t timer;
 
