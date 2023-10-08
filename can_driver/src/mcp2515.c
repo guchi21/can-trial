@@ -290,17 +290,17 @@ candrv_result_t mcp2515_change_tx_priority( const enum MCP2515_TX tx_idx, const 
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_1:
+    case MCP2515_TX_0:
 
         mcp2515_modbits_register( REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXP, priority );
         break;
 
-    case MCP2515_TX_2:
+    case MCP2515_TX_1:
 
         mcp2515_modbits_register( REG_TXB1CTRL_FLGS, MASKOF_TXB1CTRL_TXP, priority );
         break;
 
-    case MCP2515_TX_3:
+    case MCP2515_TX_2:
 
         mcp2515_modbits_register( REG_TXB2CTRL_FLGS, MASKOF_TXB2CTRL_TXP, priority );
         break;
@@ -385,19 +385,19 @@ candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_m
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_1:
+    case MCP2515_TX_0:
 
         cmd_write_id = SPICMD_WRITE_TX0ID;
         cmd_write_buf = SPICMD_WRITE_TX0DATA;
         break;
 
-    case MCP2515_TX_2:
+    case MCP2515_TX_1:
 
         cmd_write_id = SPICMD_WRITE_TX1ID;
         cmd_write_buf = SPICMD_WRITE_TX1DATA;
         break;
 
-    case MCP2515_TX_3:
+    case MCP2515_TX_2:
 
         cmd_write_id = SPICMD_WRITE_TX2ID;
         cmd_write_buf = SPICMD_WRITE_TX2DATA;
@@ -442,21 +442,21 @@ candrv_result_t mcp2515_req_send_msg( const enum MCP2515_TX tx_idx ) {
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_1:
+    case MCP2515_TX_0:
 
         cmd = SPICMD_REQ_TX0;
         ctrl_reg = REG_TXB0CTRL_FLGS;
         maskof_req = MASKOF_TXB0CTRL_TXP;
         break;
 
-    case MCP2515_TX_2:
+    case MCP2515_TX_1:
 
         cmd = SPICMD_REQ_TX1;
         ctrl_reg = REG_TXB1CTRL_FLGS;
         maskof_req = MASKOF_TXB1CTRL_TXP;
         break;
 
-    case MCP2515_TX_3:
+    case MCP2515_TX_2:
 
         cmd = SPICMD_REQ_TX2;
         ctrl_reg = REG_TXB1CTRL_FLGS;

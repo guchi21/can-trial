@@ -51,15 +51,6 @@ enum MCP2515_CAN_BAUDRATE {
     MCP2515_CAN_BAUDRATE_NUMOF_ITEMS
 };
 
-enum MCP2515_TX {
-    MCP2515_TX_INDEX_MIN = 0U,
-    MCP2515_TX_1 = MCP2515_TX_INDEX_MIN,
-    MCP2515_TX_2,
-    MCP2515_TX_3,
-    MCP2515_TX_INDEX_MAX = MCP2515_TX_3,
-    MCP2515_TX_NUMOF_ITEMS
-};
-
 
 /*==================================================================*/
 /* Prototypes                                                       */

@@ -14,12 +14,30 @@ candrv_result_t candrv_init() {
 
     rp2040_init_spi();
 
-    if ( false == mcp2515_reset_blocking() ) {
+    if ( CANDRV_FAILURE == mcp2515_reset_blocking() ) {
 
         return CANDRV_FAILURE;
     }
 
-    
+    if ( CANDRV_FAILURE == mcp2515_change_can_baudrate( MCP2515_CAN_BAUDRATE_1000KBPS ) ) {
 
+        return CANDRV_FAILURE;
+    }
+
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_0, TX_PRIORITY_LOW ) ) {
+
+        return CANDRV_FAILURE;
+    }
+
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_1, TX_PRIORITY_MIDDLE_LOW ) ) {
+
+        return CANDRV_FAILURE;
+    }
+
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_2, TX_PRIORITY_MIDDLE_HIGH ) ) {
+
+        return CANDRV_FAILURE;
+    }
+    
     return CANDRV_SUCCESS;
 }
