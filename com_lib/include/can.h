@@ -14,7 +14,7 @@
 #define CAN_CONTENT_LEN_MIN         ( 0U )              /* Minimum length of the CAN message data.  */
 #define CAN_CONTENT_LEN_MAX         ( 8U )              /* Maximum length of the CAN message data.  */
 
-#define CAN_NO_CONTENT        ( 0x00U )
+#define CAN_NO_CONTENT              ( 0x00U )
 
 
 /*==================================================================*/

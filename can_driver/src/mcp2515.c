@@ -2,10 +2,6 @@
 #include "mcp2515.h"
 #endif
 
-#ifndef RP2040_H
-#include "rp2040.h"
-#endif
-
 #ifndef MCP2515_REG_ADDR_H
 #include "mcp2515_reg_addr.h"
 #endif
@@ -14,8 +10,8 @@
 #include "mcp2515_spi_cmd.h"
 #endif
 
-#ifndef _HARDWARE_SPI_H
-#include "hardware/spi.h"
+#ifndef RP2040_H
+#include "rp2040.h"
 #endif
 
 #ifndef _HARDWARE_SYNC_H
@@ -30,20 +26,21 @@
 #define STANDARD_CAN_ID_MAX         ( 0x7FFULL )        /* Maximum value of the standard CAN ID.    */
 #define EXTENSION_CAN_ID_MAX        ( 0x1FFFFFFFULL )   /* Maximum value of the extension CAN ID.   */
 
-#define RXBUF_SIDH_IDX        (  0U )
-#define RXBUF_SIDL_IDX        (  1U )
-#define RXBUF_EID8_IDX        (  2U )
-#define RXBUF_EID0_IDX        (  3U )
-#define RXBUF_DLC_IDX         (  4U )
-#define RXBUF_D0_IDX          (  5U )
-#define RXBUF_D1_IDX          (  6U )
-#define RXBUF_D2_IDX          (  7U )
-#define RXBUF_D3_IDX          (  8U )
-#define RXBUF_D4_IDX          (  9U )
-#define RXBUF_D5_IDX          ( 10U )
-#define RXBUF_D6_IDX          ( 11U )
-#define RXBUF_D7_IDX          ( 12U )
-#define RXBUF_NUMOF_ITEMS     ( 13U )
+/* Index within RX buffer. */
+#define RXBUF_SIDH_IDX              (  0U )
+#define RXBUF_SIDL_IDX              (  1U )
+#define RXBUF_EID8_IDX              (  2U )
+#define RXBUF_EID0_IDX              (  3U )
+#define RXBUF_DLC_IDX               (  4U )
+#define RXBUF_D0_IDX                (  5U )
+#define RXBUF_D1_IDX                (  6U )
+#define RXBUF_D2_IDX                (  7U )
+#define RXBUF_D3_IDX                (  8U )
+#define RXBUF_D4_IDX                (  9U )
+#define RXBUF_D5_IDX                ( 10U )
+#define RXBUF_D6_IDX                ( 11U )
+#define RXBUF_D7_IDX                ( 12U )
+#define RXBUF_NUMOF_ITEMS           ( 13U )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -67,6 +64,7 @@ typedef struct{
 /*==================================================================*/
 /* Const definitions                                                */
 /*==================================================================*/
+
 const can_baudrate_reg_t can_baudrates[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS ] = {
     { 0xA7U, 0XBFU, 0x07U },
     { 0x31U, 0XA4U, 0X04U },
@@ -124,7 +122,7 @@ void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, c
 
 uint8_t mcp2515_get_opr_mode( void ) {
 
-    return (uint8_t) ( mcp2515_read_register( REG_CANSTAT ) & MASKOF_CANSTAT_OPMOD );
+    return (uint8_t)( mcp2515_read_register( REG_CANSTAT ) & MASKOF_CANSTAT_OPMOD );
 }
 
 static candrv_result_t verify_opr_mode_blocking( const uint8_t exp_mode ) {
@@ -161,7 +159,8 @@ candrv_result_t mcp2515_reset_blocking( void ) {
 
 static candrv_result_t wakeup( void ) {
 
-    const bool allow_wakeup_int = ( 0U < ( mcp2515_read_register( REG_CANINTE_FLGS ) & MASKOF_CANINTE_WAKIF ) ) ? true : false;
+    const bool allow_wakeup_int = ( 0U < (uint8_t)( mcp2515_read_register( REG_CANINTE_FLGS ) & MASKOF_CANINTE_WAKIF ) )
+                                     ? true : false;
 
     /* To be enabled interrupt of wake up if disabled. */
     if ( false == allow_wakeup_int ) {
@@ -181,11 +180,11 @@ static candrv_result_t wakeup( void ) {
     /* Restore interrupt of wake up. */
     if ( false == allow_wakeup_int ) {
 
-        mcp2515_modbits_register( REG_CANINTE_FLGS, MASKOF_CANINTE_WAKIF, (uint8_t) ( ~MASKOF_CANINTE_WAKIF ) );
+        mcp2515_modbits_register( REG_CANINTE_FLGS, MASKOF_CANINTE_WAKIF, (uint8_t)( ~MASKOF_CANINTE_WAKIF ) );
     }
 
     /* Clear wake up request */
-    mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_WAKIF, (uint8_t) ( ~MASKOF_CANINTF_WAKIF ) );
+    mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_WAKIF, (uint8_t)( ~MASKOF_CANINTF_WAKIF ) );
 }
 
 candrv_result_t mcp2515_change_opr_mode_blocking( const uint8_t mode ) {
@@ -228,7 +227,7 @@ candrv_result_t mcp2515_change_opr_mode_blocking( const uint8_t mode ) {
     /* Clear waked up request if to be sleep. */
     if ( OPR_MODE_SLEEP == mode ) {
 
-        mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_WAKIF, (uint8_t) ( ~MASKOF_CANINTF_WAKIF ) );
+        mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_WAKIF, (uint8_t)( ~MASKOF_CANINTF_WAKIF ) );
     }
 
     /* Apply request mode */
@@ -306,12 +305,6 @@ static bool is_valid_can_id( const can_message_t *const msg ) {
         ? true : false;
 }
 
-static bool is_valid_can_kind( const can_message_t *const msg ) {
-
-    return ( ( NULL != msg ) && ( CAN_FORMAT_KIND_INDEX_MIN <= ( msg->kind ) ) && ( CAN_FORMAT_KIND_INDEX_MAX >= ( msg->kind ) ) )
-        ? true : false;
-}
-
 static bool is_valid_can_message( const can_message_t *const msg ) {
 
     return (   ( true == is_valid_can_id( msg ) ) && ( CAN_FORMAT_KIND_INDEX_MIN <= ( msg->kind ) ) && ( CAN_FORMAT_KIND_INDEX_MAX >= ( msg->kind ) )
@@ -321,7 +314,7 @@ static bool is_valid_can_message( const can_message_t *const msg ) {
 
 static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_reg_t *const id_reg ) {
 
-    uint32_t id;
+    uint32_t can_id;
 
     /* Begin verify arguments. */
     if ( false == is_valid_can_message( msg ) || NULL == id_reg ) {
@@ -330,27 +323,33 @@ static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_
     }
     /* End verify arguments. */
 
-    id = msg->id;
+    can_id = msg->id;
 
     if ( CAN_FORMAT_KIND_EXTENSION == ( msg->kind ) ) {
         
-        id_reg->eid0 = (uint8_t) ( id & 0xFFU );
-        id_reg->eid8 = (uint8_t) ( (uint8_t) ( id >> 8 ) & 0xFFU );
+        /*--------------------------*/
+        /* Case of extended format. */
+        /*--------------------------*/
+        id_reg->eid0 = (uint8_t)( can_id & 0xFFU );
+        id_reg->eid8 = (uint8_t)( (uint8_t)( can_id >> 8 ) & 0xFFU );
 
         /* Begin SIDL */
-        id_reg->sidl = (uint8_t) ( (uint8_t) ( id >> 16U ) & 0x03U );                                 /* Bit0 to Bit1 */
-        id_reg->sidl = (uint8_t) ( id_reg->sidl + 0x08U );                                            /* Bit2 to Bit4 */
-        id_reg->sidl = (uint8_t) ( id_reg->sidl + (uint8_t) ( (uint8_t) ( id >> 13U ) & 0xE0U ) );    /* Bit5 to Bit7 */
+        id_reg->sidl = (uint8_t)( (uint8_t)( can_id >> 16U ) & 0x03U );                             /* Bit0 to Bit1 */
+        id_reg->sidl = (uint8_t)( id_reg->sidl | MASKOF_SIDL_IDE );                                 /* Bit2 to Bit4 */
+        id_reg->sidl = (uint8_t)( id_reg->sidl + (uint8_t)( (uint8_t)( can_id >> 13U ) & 0xE0U ) ); /* Bit5 to Bit7 */
         /* End SIDL */
 
-        id_reg->sidh = (uint8_t) ( (uint8_t) ( id >> 21 ) & 0xFFU );
+        id_reg->sidh = (uint8_t)( (uint8_t)( can_id >> 21 ) & 0xFFU );
     } 
     else {
 
+        /*--------------------------*/
+        /* Case of standard format. */
+        /*--------------------------*/
         id_reg->eid0 = 0U;
         id_reg->eid8 = 0U;
-        id_reg->sidl = (uint8_t) ( (uint8_t) ( id << 5 ) & 0xE0U );
-        id_reg->sidh = (uint8_t) ( (uint8_t) ( id >> 3 ) & 0xFFU );
+        id_reg->sidl = (uint8_t)( (uint8_t)( can_id << 5 ) & 0xE0U );
+        id_reg->sidh = (uint8_t)( (uint8_t)( can_id >> 3 ) & 0xFFU );
     }
 
     return CANDRV_SUCCESS;
@@ -359,7 +358,7 @@ static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_
 candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {
 
     can_id_reg_t id_reg;
-    uint8_t id_buf[5];
+    uint8_t id_buf[ 5 ];
     uint8_t cmd_write_id;
     uint8_t cmd_write_buf;
 
@@ -402,11 +401,11 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messag
     rp2040_begin_spi_commands();
 
     rp2040_write_spi( cmd_write_id );
-    rp2040_write_array_spi( id_buf, (uint8_t) ( sizeof( id_buf ) / sizeof( id_buf[ 0 ] ) ) );
+    rp2040_write_array_spi( id_buf, (uint8_t)sizeof( id_buf ) );
 
     rp2040_end_spi_commands();
     
-    if ( 0U < msg->length ) {
+    if ( 0U < ( msg->length ) ) {
 
         rp2040_begin_spi_commands();
 
@@ -453,7 +452,7 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
         return CANDRV_FAILURE;
     }
 
-    if ( 0U < (uint8_t) ( mcp2515_read_register( ctrl_reg ) & maskof_req ) ) {
+    if ( 0U < (uint8_t)( mcp2515_read_register( ctrl_reg ) & maskof_req ) ) {
 
         return CANDRV_FAILURE;
     }
@@ -469,6 +468,11 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
 
     uint8_t cmd;
     uint8_t buf[ RXBUF_NUMOF_ITEMS ];
+
+    if( NULL == msg ) {
+
+        return CANDRV_FAILURE;
+    }
 
     switch ( rx_idx ) {
 
@@ -490,7 +494,7 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
     rp2040_begin_spi_commands();
 
     rp2040_write_spi( cmd );
-    rp2040_read_array_spi( buf, (uint8_t)( sizeof( buf ) ) );
+    rp2040_read_array_spi( buf, (uint8_t)sizeof( buf ) );
 
     rp2040_end_spi_commands();
 
