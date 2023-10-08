@@ -10,9 +10,11 @@
 #include "mcp2515.h"
 #endif
 
-bool candrv_init() {
+candrv_result_t candrv_init() {
 
-    if ( false == rp2040_init_spi(); ) {
+    rp2040_init_spi();
+
+    if ( false == mcp2515_reset_blocking() ) {
 
         return CANDRV_FAILURE;
     }

@@ -1,6 +1,10 @@
 #ifndef RP2040_H
 #define RP2040_H
 
+#ifndef _PICO_STDLIB_H
+#include "pico/stdlib.h"
+#endif
+
 /*==================================================================*/
 /* Macro definitions                                                */
 /*==================================================================*/
@@ -39,13 +43,18 @@ void rp2040_end_spi_commands();
 /*! \brief Read a byte from SPI.
  * \return read value
  */
-uint8_t rp2040_read_byte_from_spi();
+uint8_t rp2040_read_spi();
 
 
 /*! \brief Write a byte to SPI.
  * \param val write value
  */
-void rp2040_write_byte_to_spi( const uint8_t val );
+void rp2040_write_spi( const uint8_t val );
+
+/*! \brief Write bytes to SPI.
+ * \param val write value
+ */
+void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length );
 
 
 #endif  /* RP2040_H */

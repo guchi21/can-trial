@@ -19,20 +19,20 @@
 /*==================================================================*/
 /* Type definitions                                                 */
 /*==================================================================*/
-
+typedef bool candrv_result_t;
 
 /*==================================================================*/
 /* Prototypes                                                       */
 /*==================================================================*/
 
-bool candrv_init();
-bool candrv_set_tx0_msg( const can_message_t *const msg );
-bool candrv_set_tx1_msg( const can_message_t *const msg );
-bool candrv_set_tx2_msg( const can_message_t *const msg );
-bool candrv_req_send_tx0();
-bool candrv_req_send_tx1();
-bool candrv_req_send_tx2();
-bool candrv_get_rx0_msg( can_message_t *const msg );
-bool candrv_get_rx1_msg( can_message_t *const msg );
+candrv_result_t candrv_init();
+candrv_result_t candrv_set_tx0_msg( const can_message_t *const msg );
+candrv_result_t candrv_set_tx1_msg( const can_message_t *const msg );
+candrv_result_t candrv_set_tx2_msg( const can_message_t *const msg );
+candrv_result_t candrv_req_send_tx0();
+candrv_result_t candrv_req_send_tx1();
+candrv_result_t candrv_req_send_tx2();
+candrv_result_t candrv_get_rx0_msg( can_message_t *const msg );
+candrv_result_t candrv_get_rx1_msg( can_message_t *const msg );
 
 #endif  /* CAN_DRIVER_H */

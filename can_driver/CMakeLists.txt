@@ -7,6 +7,7 @@ project( can_driver
 )
 
 add_library( can_driver STATIC
+    ./src/rp2040.c
     ./src/mcp2515.c
     ./src/can_driver.c
 )

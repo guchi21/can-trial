@@ -64,7 +64,7 @@ void rp2040_end_spi_commands() {
     gpio_put( GPIO_MCP2515_CS, PIN_VOLTAGE_HIGH );
 }
 
-uint8_t rp2040_read_byte_from_spi() {
+uint8_t rp2040_read_spi() {
 
     uint8_t val;
 
@@ -73,7 +73,15 @@ uint8_t rp2040_read_byte_from_spi() {
     return val;
 }
 
-void rp2040_write_byte_to_spi( const uint8_t val ) {
+void rp2040_write_spi( const uint8_t val ) {
 
     spi_write_blocking( spi0, &val, 1U );
+}
+
+void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length ) {
+
+    if ( NULL != array && length > 0 ) {
+
+        spi_write_blocking( spi0, array, length );
+    }
 }
