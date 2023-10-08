@@ -62,5 +62,9 @@ void rp2040_write_spi( const uint8_t val );
  */
 void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length );
 
+/*! \brief Register callback function for CAN interruption.
+ * \param callback callback function. unregister if NULL.
+ */
+void rp2040_register_can_int_callback(gpio_irq_callback_t callback);
 
 #endif  /* RP2040_H */
