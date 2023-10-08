@@ -24,17 +24,22 @@ candrv_result_t candrv_init() {
         return CANDRV_FAILURE;
     }
 
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_0, TX_PRIORITY_LOW ) ) {
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_0, TX_PRIORITY_LOW ) ) {
 
         return CANDRV_FAILURE;
     }
 
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_1, TX_PRIORITY_MIDDLE_LOW ) ) {
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_1, TX_PRIORITY_MIDDLE_LOW ) ) {
 
         return CANDRV_FAILURE;
     }
 
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( MCP2515_TX_2, TX_PRIORITY_MIDDLE_HIGH ) ) {
+    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_2, TX_PRIORITY_MIDDLE_HIGH ) ) {
+
+        return CANDRV_FAILURE;
+    }
+
+    if ( CANDRV_FAILURE == mcp2515_change_opr_mode_blocking( OPR_MODE_NORMAL ) ) {
 
         return CANDRV_FAILURE;
     }

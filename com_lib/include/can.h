@@ -10,6 +10,12 @@
 /* Macro definitions                                                */
 /*==================================================================*/
 
+/* Related CAN content length definitions */
+#define CAN_CONTENT_LEN_MIN         ( 0U )              /* Minimum length of the CAN message data.  */
+#define CAN_CONTENT_LEN_MAX         ( 8U )              /* Maximum length of the CAN message data.  */
+
+#define CAN_NO_CONTENT        ( 0x00U )
+
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -25,7 +31,7 @@ typedef struct {
     can_format_kind_t kind;
     uint32_t id;
     uint8_t length;
-    uint8_t *content;
+    uint8_t content[ CAN_CONTENT_LEN_MAX ];
 } can_message_t;
 
 

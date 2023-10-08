@@ -1,7 +1,3 @@
-#ifndef TYPES_H
-#include "types.h"
-#endif
-
 #ifndef MCP2515_H
 #include "mcp2515.h"
 #endif
@@ -30,35 +26,24 @@
 /* Macro definitions                                                */
 /*==================================================================*/
 
-/* MCP2515 timeout for write to the register. */
-#define RESET_TIMEOUT   ( 1000ULL )
-
-/* RP2040 pin voltage. */
-#define PIN_VOLTAGE_LOW             ( 0U )
-#define PIN_VOLTAGE_HIGH            ( 1U )
-
-
-/* RP2040 SPI clock. */
-#define SPI_BAUDRATE                ( 1000000U )        /* SPI baudrate in Hz. */
-
-
-/* RP2040 GPIO numbers. */
-#define GPIO_MCP2515_MISO           (  4U )             /* RP2040 pin #06.  */
-#define GPIO_MCP2515_CS             (  5U )             /* RP2040 pin #07.  */
-#define GPIO_MCP2515_SCK            (  6U )             /* RP2040 pin #09.  */
-#define GPIO_MCP2515_MOSI           (  7U )             /* RP2040 pin #10.  */
-#define GPIO_MCP2515_INT1           ( 21U )             /* RP2040 pin #27.  */
-
-
 /* Related CAN id definitions */
 #define STANDARD_CAN_ID_MAX         ( 0x7FFULL )        /* Maximum value of the standard CAN ID.    */
 #define EXTENSION_CAN_ID_MAX        ( 0x1FFFFFFFULL )   /* Maximum value of the extension CAN ID.   */
 
-
-/* Related CAN content length definitions */
-#define CAN_CONTENT_LEN_MIN         ( 0U )              /* Minimum length of the CAN message data.  */
-#define CAN_CONTENT_LEN_MAX         ( 8U )              /* Maximum length of the CAN message data.  */
-
+#define RXBUF_SIDH_IDX        (  0U )
+#define RXBUF_SIDL_IDX        (  1U )
+#define RXBUF_EID8_IDX        (  2U )
+#define RXBUF_EID0_IDX        (  3U )
+#define RXBUF_DLC_IDX         (  4U )
+#define RXBUF_D0_IDX          (  5U )
+#define RXBUF_D1_IDX          (  6U )
+#define RXBUF_D2_IDX          (  7U )
+#define RXBUF_D3_IDX          (  8U )
+#define RXBUF_D4_IDX          (  9U )
+#define RXBUF_D5_IDX          ( 10U )
+#define RXBUF_D6_IDX          ( 11U )
+#define RXBUF_D7_IDX          ( 12U )
+#define RXBUF_NUMOF_ITEMS     ( 13U )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -151,7 +136,7 @@ static candrv_result_t verify_opr_mode_blocking( const uint8_t exp_mode ) {
         opr_mode = mcp2515_get_opr_mode();
 
         const uint32_t current = time_us_32();
-        const uint32_t elapsed = ( current < begun ) ? ( UINT32_VALUE_MAX - begun + current + 1UL ) : ( current - begun );
+        const uint32_t elapsed = ( current < begun ) ? ( UINT32_MAX - begun + current + 1UL ) : ( current - begun );
 
         if ( elapsed > TIMEOUTOF_OPR_MODE_CHANGE ) {
 
@@ -274,7 +259,7 @@ candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE bau
     return true;
 }
 
-candrv_result_t mcp2515_change_tx_priority( const enum MCP2515_TX tx_idx, const uint8_t priority ) {
+candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const uint8_t priority ) {
 
     /* Verify priprity. */
     if ( TX_PRIORITY_HIGH < priority ) {
@@ -290,17 +275,17 @@ candrv_result_t mcp2515_change_tx_priority( const enum MCP2515_TX tx_idx, const 
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_0:
+    case CANDRV_TX_0:
 
         mcp2515_modbits_register( REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXP, priority );
         break;
 
-    case MCP2515_TX_1:
+    case CANDRV_TX_1:
 
         mcp2515_modbits_register( REG_TXB1CTRL_FLGS, MASKOF_TXB1CTRL_TXP, priority );
         break;
 
-    case MCP2515_TX_2:
+    case CANDRV_TX_2:
 
         mcp2515_modbits_register( REG_TXB2CTRL_FLGS, MASKOF_TXB2CTRL_TXP, priority );
         break;
@@ -371,7 +356,7 @@ static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_
     return CANDRV_SUCCESS;
 }
 
-candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_message_t *const msg ) {
+candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {
 
     can_id_reg_t id_reg;
     uint8_t id_buf[5];
@@ -385,22 +370,22 @@ candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_m
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_0:
+    case CANDRV_TX_0:
 
-        cmd_write_id = SPICMD_WRITE_TX0ID;
-        cmd_write_buf = SPICMD_WRITE_TX0DATA;
+        cmd_write_id = SPICMD_WRITE_TX0_ID;
+        cmd_write_buf = SPICMD_WRITE_TX0_CONTENT;
         break;
 
-    case MCP2515_TX_1:
+    case CANDRV_TX_1:
 
-        cmd_write_id = SPICMD_WRITE_TX1ID;
-        cmd_write_buf = SPICMD_WRITE_TX1DATA;
+        cmd_write_id = SPICMD_WRITE_TX1_ID;
+        cmd_write_buf = SPICMD_WRITE_TX1_CONTENT;
         break;
 
-    case MCP2515_TX_2:
+    case CANDRV_TX_2:
 
-        cmd_write_id = SPICMD_WRITE_TX2ID;
-        cmd_write_buf = SPICMD_WRITE_TX2DATA;
+        cmd_write_id = SPICMD_WRITE_TX2_ID;
+        cmd_write_buf = SPICMD_WRITE_TX2_CONTENT;
         break;
 
     default:
@@ -416,7 +401,7 @@ candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_m
 
     rp2040_begin_spi_commands();
 
-    rp2040_write_spi( SPICMD_WRITE_TX0ID );
+    rp2040_write_spi( cmd_write_id );
     rp2040_write_array_spi( id_buf, (uint8_t) ( sizeof( id_buf ) / sizeof( id_buf[ 0 ] ) ) );
 
     rp2040_end_spi_commands();
@@ -425,7 +410,7 @@ candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_m
 
         rp2040_begin_spi_commands();
 
-        rp2040_write_spi( SPICMD_WRITE_TX0DATA );
+        rp2040_write_spi( cmd_write_buf );
         rp2040_write_array_spi( msg->content, msg->length );
 
         rp2040_end_spi_commands();
@@ -434,7 +419,7 @@ candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_m
     return true;
 }
 
-candrv_result_t mcp2515_req_send_msg( const enum MCP2515_TX tx_idx ) {
+candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
     uint8_t cmd;
     uint8_t ctrl_reg;
@@ -442,21 +427,21 @@ candrv_result_t mcp2515_req_send_msg( const enum MCP2515_TX tx_idx ) {
 
     switch ( tx_idx ) {
 
-    case MCP2515_TX_0:
+    case CANDRV_TX_0:
 
         cmd = SPICMD_REQ_TX0;
         ctrl_reg = REG_TXB0CTRL_FLGS;
         maskof_req = MASKOF_TXB0CTRL_TXP;
         break;
 
-    case MCP2515_TX_1:
+    case CANDRV_TX_1:
 
         cmd = SPICMD_REQ_TX1;
         ctrl_reg = REG_TXB1CTRL_FLGS;
         maskof_req = MASKOF_TXB1CTRL_TXP;
         break;
 
-    case MCP2515_TX_2:
+    case CANDRV_TX_2:
 
         cmd = SPICMD_REQ_TX2;
         ctrl_reg = REG_TXB1CTRL_FLGS;
@@ -480,3 +465,76 @@ candrv_result_t mcp2515_req_send_msg( const enum MCP2515_TX tx_idx ) {
     rp2040_end_spi_commands();
 }
 
+candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
+
+    uint8_t cmd;
+    uint8_t buf[ RXBUF_NUMOF_ITEMS ];
+
+    switch ( rx_idx ) {
+
+    case CANDRV_RX_0:
+
+        cmd = SPICMD_READ_RX0_ID;
+        break;
+
+    case CANDRV_RX_1:
+
+        cmd = SPICMD_READ_RX1_ID;
+        break;
+
+    default:
+
+        return CANDRV_FAILURE;
+    }
+
+    rp2040_begin_spi_commands();
+
+    rp2040_write_spi( cmd );
+    rp2040_read_array_spi( buf, (uint8_t)( sizeof( buf ) ) );
+
+    rp2040_end_spi_commands();
+
+    /* Begin extract CAN id. */
+    msg->id = (uint32_t)( (uint32_t)( buf[ RXBUF_SIDL_IDX ] >> 5U ) & 0x7UL );
+    msg->id = (uint32_t)( msg->id | (uint32_t) ( (uint32_t)( (uint32_t)buf[ RXBUF_SIDH_IDX ] << 3U ) & 0x7F8UL ) );
+
+    if ( 0U < (uint8_t)( buf[ RXBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) ) {
+
+        /*--------------------------*/
+        /* Case of extended format. */
+        /*--------------------------*/
+        msg->kind = CAN_FORMAT_KIND_EXTENSION;
+
+        msg->id = (uint32_t)( (uint32_t)( msg->id ) << 18U );
+        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( buf[ RXBUF_EID0_IDX ] & 0xFFU ) );
+        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( (uint32_t)( (uint32_t)buf[ RXBUF_EID8_IDX ] <<  8U ) & 0x0FF00UL ) );
+        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( (uint32_t)( (uint32_t)buf[ RXBUF_SIDL_IDX ] << 16U ) & 0x30000UL ) );
+    }
+    else {
+
+        /*--------------------------*/
+        /* Case of standard format. */
+        /*--------------------------*/
+        msg->kind = CAN_FORMAT_KIND_STANDARD;
+    }
+    /* End extract CAN id. */
+
+    /* Content length. */
+    msg->length = buf[ RXBUF_DLC_IDX ];
+
+    /* Begin extract CAN content. */
+    for ( uint8_t i = 0U; i < CAN_CONTENT_LEN_MAX; i++ ) {
+
+        if ( msg->length > i ) {
+
+            msg->content[ i ] = buf[ (uint8_t)( RXBUF_D0_IDX + i ) ];
+        }
+        else {
+
+            msg->content[ i ] = CAN_NO_CONTENT;
+        }
+    }
+    /* End extract CAN content. */
+
+    return CANDRV_SUCCESS;
+}

@@ -64,8 +64,6 @@ candrv_result_t mcp2515_reset_blocking( void );
 uint8_t mcp2515_get_opr_mode( void );
 candrv_result_t mcp2515_change_opr_mode_blocking( const uint8_t mode );
 candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate );
-candrv_result_t mcp2515_change_tx_priority( const enum MCP2515_TX tx_idx, const uint8_t priority );
-candrv_result_t mcp2515_set_tx_buffer( const enum MCP2515_TX tx_idx, const can_message_t *const msg );
-
+candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const uint8_t priority );
 
 #endif /* MCP2515_H */

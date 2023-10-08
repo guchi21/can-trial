@@ -15,6 +15,7 @@
 #define CANDRV_FAILURE ( 0U )
 #define CANDRV_SUCCESS ( 1U )
 
+#define CANDRV_INVALID_CAN_ID ( UINT32_MAX )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -26,13 +27,21 @@ typedef bool candrv_result_t;
 /* Const definitions                                                */
 /*==================================================================*/
 
-enum MCP2515_TX {
-    MCP2515_TX_INDEX_MIN = 0U,
-    MCP2515_TX_0 = MCP2515_TX_INDEX_MIN,
-    MCP2515_TX_1,
-    MCP2515_TX_2,
-    MCP2515_TX_INDEX_MAX = MCP2515_TX_2,
-    MCP2515_TX_NUMOF_ITEMS
+enum CANDRV_TX {
+    CANDRV_TX_INDEX_MIN = 0U,
+    CANDRV_TX_0 = CANDRV_TX_INDEX_MIN,
+    CANDRV_TX_1,
+    CANDRV_TX_2,
+    CANDRV_TX_INDEX_MAX = CANDRV_TX_2,
+    CANDRV_TX_NUMOF_ITEMS
+};
+
+enum CANDRV_RX {
+    CANDRV_RX_INDEX_MIN = 0U,
+    CANDRV_RX_0 = CANDRV_RX_INDEX_MIN,
+    CANDRV_RX_1,
+    CANDRV_RX_INDEX_MAX = CANDRV_RX_1,
+    CANDRV_RX_NUMOF_ITEMS
 };
 
 
@@ -41,13 +50,9 @@ enum MCP2515_TX {
 /*==================================================================*/
 
 candrv_result_t candrv_init();
-candrv_result_t candrv_set_tx0_msg( const can_message_t *const msg );
-candrv_result_t candrv_set_tx1_msg( const can_message_t *const msg );
-candrv_result_t candrv_set_tx2_msg( const can_message_t *const msg );
-candrv_result_t candrv_req_send_tx0();
-candrv_result_t candrv_req_send_tx1();
-candrv_result_t candrv_req_send_tx2();
-candrv_result_t candrv_get_rx0_msg( can_message_t *const msg );
-candrv_result_t candrv_get_rx1_msg( can_message_t *const msg );
+candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg );
+candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx );
+candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg );
+
 
 #endif  /* CAN_DRIVER_H */
