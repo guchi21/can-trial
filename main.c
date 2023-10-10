@@ -14,8 +14,7 @@
 #include <string.h>
 
 bool is_received = false;
-can_message_t recv_msg;
-uint8_t recv_content[8] = { 0,0,0,0, 0,0,0,0 };
+can_message_t recv_msg = { CAN_FORMAT_KIND_STANDARD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
 
 void callback( uint gpio, uint32_t event_mask ) {
 
@@ -32,13 +31,9 @@ void callback( uint gpio, uint32_t event_mask ) {
 int main() {
 
     bool is_available_local_msg = false;
-    can_message_t local_msg;
-    uint8_t local_content[8] = { 0,0,0,0, 0,0,0,0 };
+    can_message_t local_msg = { CAN_FORMAT_KIND_STANDARD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
     uint32_t rt = time_us_32();
     uint32_t prert = rt;
-
-    recv_msg.content = recv_content;
-    local_msg.content = local_content;
 
     stdio_init_all();
     
@@ -87,10 +82,7 @@ int main() {
 
         if ( is_available_local_msg ) {
 
-            rt = local_msg.content[4];
-            rt += local_msg.content[5] << 8;
-            rt += local_msg.content[6] << 16;
-            rt += local_msg.content[7] << 24;
+            rt = local_msg.content[4] + ( local_msg.content[5] << 8 ) + ( local_msg.content[6] << 16 ) + ( local_msg.content[7] << 24 );
 
             printf( "\nReceived new message. [%#X] %#X %#X %#X %#X %#X %#X %#X %#X | %d \n", local_msg.id,
                 local_msg.content[0], local_msg.content[1], local_msg.content[2], local_msg.content[3],
