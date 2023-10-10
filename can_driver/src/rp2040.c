@@ -94,7 +94,7 @@ void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length ) 
     }
 }
 
-void rp2040_register_can_int_callback(gpio_irq_callback_t callback) {
+void rp2040_register_can_int_callback( const gpio_irq_callback_t callback ) {
 
     gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT1, (uint32_t)GPIO_IRQ_EDGE_FALL, true, callback );
 }

@@ -14,6 +14,10 @@
 #include "rp2040.h"
 #endif
 
+#ifndef _HARDWARE_TIMER_H
+#include "hardware/timer.h"
+#endif
+
 #ifndef _HARDWARE_SYNC_H
 #include "hardware/sync.h"
 #endif
@@ -457,11 +461,25 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
         return CANDRV_FAILURE;
     }
 
-    rp2040_begin_spi_commands();
+    // tmp
+    mcp2515_modbits_register( REG_CANINTE_FLGS, MASKOF_CANINTE_TX0IF, 0xFF );  // Enable TX0 INT.
+    // mcp2515_modbits_register( REG_CANINTF_FLGS, 0x84, 0 );  // Clear int MERR, TX0. だめ。送れない
+    mcp2515_modbits_register( REG_CANINTF_FLGS, 0xA4, 0 );  // Clear int MERR, ERR, TX0.
+    // tmp
 
-    rp2040_write_spi( cmd );
 
-    rp2040_end_spi_commands();
+    // rp2040_begin_spi_commands();
+    // rp2040_write_spi( cmd );
+    // rp2040_end_spi_commands();
+    mcp2515_modbits_register( REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXREQ, 0xFF );
+
+
+    // tmp
+    if ( 0U < (uint8_t)( mcp2515_read_register( ctrl_reg ) & maskof_req ) ) {
+
+        printf("送信ビットが立ちました。");
+    }
+    // tmp
 }
 
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {

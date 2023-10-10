@@ -31,7 +31,7 @@ typedef struct {
     can_format_kind_t kind;
     uint32_t id;
     uint8_t length;
-    uint8_t content[ CAN_CONTENT_LEN_MAX ];
+    uint8_t *content;
 } can_message_t;
 
 
