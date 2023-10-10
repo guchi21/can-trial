@@ -426,6 +426,8 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
     uint8_t cmd;
     uint8_t ctrl_reg;
+    uint8_t maskof_int_e_reg;
+    uint8_t maskof_int_f_reg;
     uint8_t maskof_req;
 
     switch ( tx_idx ) {
@@ -434,6 +436,8 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
         cmd = SPICMD_REQ_TX0;
         ctrl_reg = REG_TXB0CTRL_FLGS;
+        maskof_int_e_reg = MASKOF_CANINTE_TX0IF;
+        maskof_int_f_reg = MASKOF_CANINTF_TX0IF;
         maskof_req = MASKOF_TXB0CTRL_TXP;
         break;
 
@@ -441,6 +445,8 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
         cmd = SPICMD_REQ_TX1;
         ctrl_reg = REG_TXB1CTRL_FLGS;
+        maskof_int_e_reg = MASKOF_CANINTE_TX1IF;
+        maskof_int_f_reg = MASKOF_CANINTF_TX1IF;
         maskof_req = MASKOF_TXB1CTRL_TXP;
         break;
 
@@ -448,6 +454,8 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
         cmd = SPICMD_REQ_TX2;
         ctrl_reg = REG_TXB1CTRL_FLGS;
+        maskof_int_e_reg = MASKOF_CANINTE_TX2IF;
+        maskof_int_f_reg = MASKOF_CANINTF_TX2IF;
         maskof_req = MASKOF_TXB2CTRL_TXP;
         break;
 
@@ -462,30 +470,23 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
     }
 
     // tmp
-    mcp2515_modbits_register( REG_CANINTE_FLGS, MASKOF_CANINTE_TX0IF, 0xFF );  // Enable TX0 INT.
-    // mcp2515_modbits_register( REG_CANINTF_FLGS, 0x84, 0 );  // Clear int MERR, TX0. だめ。送れない
-    mcp2515_modbits_register( REG_CANINTF_FLGS, 0xA4, 0 );  // Clear int MERR, ERR, TX0.
+    mcp2515_modbits_register( REG_CANINTE_FLGS, maskof_int_e_reg, 0xFF );  // Enable TX INT.
+    mcp2515_modbits_register( REG_CANINTF_FLGS, maskof_int_f_reg, 0 );  // Clear int TX.
     // tmp
 
 
-    // rp2040_begin_spi_commands();
-    // rp2040_write_spi( cmd );
-    // rp2040_end_spi_commands();
-    mcp2515_modbits_register( REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXREQ, 0xFF );
+    rp2040_begin_spi_commands();
 
+    rp2040_write_spi( cmd );
 
-    // tmp
-    if ( 0U < (uint8_t)( mcp2515_read_register( ctrl_reg ) & maskof_req ) ) {
-
-        printf("送信ビットが立ちました。");
-    }
-    // tmp
+    rp2040_end_spi_commands();
 }
 
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
 
     uint8_t cmd;
     uint8_t buf[ RXBUF_NUMOF_ITEMS ];
+    uint8_t content[8] = { CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT };
 
     if( NULL == msg ) {
 
@@ -547,14 +548,14 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
     /* Begin extract CAN content. */
     for ( uint8_t i = 0U; i < CAN_CONTENT_LEN_MAX; i++ ) {
 
-        if ( msg->length > i ) {
+        // if ( msg->length > i ) {
 
             msg->content[ i ] = buf[ (uint8_t)( RXBUF_D0_IDX + i ) ];
-        }
-        else {
+        // }
+        // else {
 
-            msg->content[ i ] = CAN_NO_CONTENT;
-        }
+        //     msg->content[ i ] = CAN_NO_CONTENT;
+        // }
     }
     /* End extract CAN content. */
 

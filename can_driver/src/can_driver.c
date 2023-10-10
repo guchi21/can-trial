@@ -22,39 +22,32 @@
 
 candrv_result_t candrv_init() {
 
+    bool to_be_continued = true;
+
     rp2040_init_spi();
 
-    if ( CANDRV_FAILURE == mcp2515_reset_blocking() ) {
+    to_be_continued = ( to_be_continued && mcp2515_reset_blocking() ) ? true : false;
 
-        return CANDRV_FAILURE;
+    to_be_continued = ( to_be_continued && mcp2515_change_can_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) ? true : false;
+
+    // Begin trial implements
+    mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_RXM, MASKOF_RXB0CTRL_RXM );
+    mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
+    // End trial implements
+
+    if ( to_be_continued ) {
+
+        candrv_set_irq_enabled( CANDRV_IRQ_RX0_FULL, true );
     }
 
-    if ( CANDRV_FAILURE == mcp2515_change_can_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) {
+    to_be_continued = ( to_be_continued && mcp2515_change_opr_mode_blocking( OPR_MODE_NORMAL ) ) ? true : false;
 
-        return CANDRV_FAILURE;
-    }
+    return to_be_continued ? CANDRV_SUCCESS : CANDRV_FAILURE;
+}
 
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_0, TX_PRIORITY_LOW ) ) {
+void candrv_tmp_clr_rx0( void ) {
 
-        return CANDRV_FAILURE;
-    }
-
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_1, TX_PRIORITY_MIDDLE_LOW ) ) {
-
-        return CANDRV_FAILURE;
-    }
-
-    if ( CANDRV_FAILURE == mcp2515_change_tx_priority( CANDRV_TX_2, TX_PRIORITY_MIDDLE_HIGH ) ) {
-
-        return CANDRV_FAILURE;
-    }
-
-    if ( CANDRV_FAILURE == mcp2515_change_opr_mode_blocking( OPR_MODE_NORMAL ) ) {
-
-        return CANDRV_FAILURE;
-    }
-
-    return CANDRV_SUCCESS;
+    mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_RX0IF, 0 );
 }
 
 void candrv_tmp1(can_message_t *msg) {
@@ -214,4 +207,24 @@ bool candrv_tmp_is_err( void ) {
 void candrv_register_callback( const can_int_callback_t callback ) {
 
     rp2040_register_can_int_callback( (gpio_irq_callback_t)callback );
+}
+
+void candrv_set_irq_enabled( enum CANDRV_IRQ irq, bool enabled ) {
+
+    const enum CANDRV_IRQ irq_table[ CANDRV_IRQ_NUMOF_ITEMS ] = {
+        MASKOF_CANINTE_RX0IF, MASKOF_CANINTE_RX1IF, MASKOF_CANINTE_TX0IF, MASKOF_CANINTE_TX1IF,
+        MASKOF_CANINTE_TX2IF, MASKOF_CANINTE_ERRIF, MASKOF_CANINTE_WAKIF, MASKOF_CANINTE_MERRF
+    };
+
+    uint8_t mask;
+    uint8_t val;
+
+    if ( CANDRV_IRQ_INDEX_MIN <= irq && CANDRV_IRQ_INDEX_MAX >= irq ) {
+
+        mask = irq_table[ irq ];
+
+        val = ( true == enabled ) ? mask : (uint8_t)( ~mask );
+
+        mcp2515_modbits_register( REG_CANINTE_FLGS, mask, val );
+    }
 }

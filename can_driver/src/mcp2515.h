@@ -23,7 +23,7 @@
 #define OPR_MODE_LISTENONLY         ( 0x60U )           /* Listen only mode.                */
 #define OPR_MODE_CONFIG             ( 0x80U )           /* Config mode.                     */
 #define OPR_MODE_INVALID            ( 0xE0U )
-#define TIMEOUTOF_OPR_MODE_CHANGE   ( 1000UL )
+#define TIMEOUTOF_OPR_MODE_CHANGE   ( 1000000UL )       /* Timeout of change operation mode in micro seconds. */
 
 
 /*==================================================================*/
