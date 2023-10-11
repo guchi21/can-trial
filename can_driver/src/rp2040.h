@@ -57,10 +57,10 @@ void rp2040_read_array_spi( uint8_t *const array, const uint8_t length );
 void rp2040_write_spi( const uint8_t val );
 
 /*! \brief Write bytes to SPI.
- * \param array write values
  * \param length write bytes length
+ * \param buf write values
  */
-void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length );
+void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] );
 
 /*! \brief Register callback function for CAN interruption.
  * \param callback callback function. unregister if NULL.

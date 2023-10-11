@@ -83,14 +83,14 @@ void rp2040_read_array_spi( uint8_t *const array, const uint8_t length ) {
 
 void rp2040_write_spi( const uint8_t val ) {
 
-    spi_write_blocking( spi0, &val, 1U );
+    rp2040_write_array_spi( 1U, &val );
 }
 
-void rp2040_write_array_spi( const uint8_t *const array, const uint8_t length ) {
+void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] ) {
 
-    if ( NULL != array && length > 0U ) {
+    if ( 0U < n && NULL != buf ) {
 
-        spi_write_blocking( spi0, array, length );
+        spi_write_blocking( spi0, buf, n );
     }
 }
 
