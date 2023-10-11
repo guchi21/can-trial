@@ -11,20 +11,21 @@
 /*==================================================================*/
 
 /* Related CAN content length definitions */
-#define CAN_CONTENT_LEN_MIN         ( 0U )              /* Minimum length of the CAN message data.  */
-#define CAN_CONTENT_LEN_MAX         ( 8U )              /* Maximum length of the CAN message data.  */
+#define CAN_MINOF_LEN                   ( 0U )                  /* Minimum length of the content of CAN message.  */
+#define CAN_MAXOF_LEN                   ( 8U )                  /* Maximum length of the content of CAN message.  */
 
-#define CAN_NO_CONTENT              ( 0x00U )
+#define CAN_INVALID_ID                  ( UINT32_MAX )
 
 
 /*==================================================================*/
 /* Type definitions                                                 */
 /*==================================================================*/
+
 typedef enum {
-    CAN_FORMAT_KIND_INDEX_MIN = 0U,
-    CAN_FORMAT_KIND_STANDARD = CAN_FORMAT_KIND_INDEX_MIN,
-    CAN_FORMAT_KIND_EXTENSION,
-    CAN_FORMAT_KIND_INDEX_MAX = CAN_FORMAT_KIND_EXTENSION
+    CAN_KIND_MINOF_IDX = 0U,
+    CAN_KIND_STD = CAN_KIND_MINOF_IDX,
+    CAN_KIND_EXT,
+    CAN_KIND_MAXOF_IDX = CAN_KIND_EXT
 } can_format_kind_t;
 
 typedef struct {

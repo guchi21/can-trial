@@ -219,7 +219,7 @@ void candrv_set_irq_enabled( enum CANDRV_IRQ irq, bool enabled ) {
     uint8_t mask;
     uint8_t val;
 
-    if ( CANDRV_IRQ_INDEX_MIN <= irq && CANDRV_IRQ_INDEX_MAX >= irq ) {
+    if ( CANDRV_IRQ_MINOF_IDX <= irq && CANDRV_IRQ_MAXOF_IDX >= irq ) {
 
         mask = irq_table[ irq ];
 

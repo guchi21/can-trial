@@ -15,7 +15,6 @@
 #define CANDRV_FAILURE ( 0U )
 #define CANDRV_SUCCESS ( 1U )
 
-#define CANDRV_INVALID_CAN_ID ( UINT32_MAX )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -30,25 +29,25 @@ typedef void (*can_int_callback_t)( uint gpio, uint32_t event_mask );
 /*==================================================================*/
 
 enum CANDRV_TX {
-    CANDRV_TX_INDEX_MIN = 0U,
-    CANDRV_TX_0 = CANDRV_TX_INDEX_MIN,
+    CANDRV_TX_MINOF_IDX = 0U,
+    CANDRV_TX_0 = CANDRV_TX_MINOF_IDX,
     CANDRV_TX_1,
     CANDRV_TX_2,
-    CANDRV_TX_INDEX_MAX = CANDRV_TX_2,
+    CANDRV_TX_MAXOF_IDX = CANDRV_TX_2,
     CANDRV_TX_NUMOF_ITEMS
 };
 
 enum CANDRV_RX {
-    CANDRV_RX_INDEX_MIN = 0U,
-    CANDRV_RX_0 = CANDRV_RX_INDEX_MIN,
+    CANDRV_RX_MINOF_IDX = 0U,
+    CANDRV_RX_0 = CANDRV_RX_MINOF_IDX,
     CANDRV_RX_1,
-    CANDRV_RX_INDEX_MAX = CANDRV_RX_1,
+    CANDRV_RX_MAXOF_IDX = CANDRV_RX_1,
     CANDRV_RX_NUMOF_ITEMS
 };
 
 enum CANDRV_IRQ {
-    CANDRV_IRQ_INDEX_MIN = 0U,
-    CANDRV_IRQ_RX0_FULL = CANDRV_IRQ_INDEX_MIN,
+    CANDRV_IRQ_MINOF_IDX = 0U,
+    CANDRV_IRQ_RX0_FULL = CANDRV_IRQ_MINOF_IDX,
     CANDRV_IRQ_RX1_FULL,
     CANDRV_IRQ_TX0_EMPTY,
     CANDRV_IRQ_TX1_EMPTY,
@@ -56,7 +55,7 @@ enum CANDRV_IRQ {
     CANDRV_IRQ_ERR,
     CANDRV_IRQ_WAKEUP,
     CANDRV_IRQ_MSGERR,
-    CANDRV_IRQ_INDEX_MAX = CANDRV_IRQ_MSGERR,
+    CANDRV_IRQ_MAXOF_IDX = CANDRV_IRQ_MSGERR,
     CANDRV_IRQ_NUMOF_ITEMS
 };
 

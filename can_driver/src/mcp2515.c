@@ -64,12 +64,17 @@ typedef struct{
     uint8_t eid0;
 } can_id_reg_t;
 
+struct RX_SPICMD {
+    uint8_t read_id;
+    uint8_t read_content;
+};
+
 
 /*==================================================================*/
 /* Const definitions                                                */
 /*==================================================================*/
 
-const can_baudrate_reg_t can_baudrates[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS ] = {
+static const can_baudrate_reg_t can_baudrates[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS ] = {
     { 0xA7U, 0XBFU, 0x07U },
     { 0x31U, 0XA4U, 0X04U },
     { 0x18U, 0XA4U, 0x04U },
@@ -80,6 +85,11 @@ const can_baudrate_reg_t can_baudrates[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS ] = {
     { 0x00U, 0x9EU, 0x03U },
     { 0x00U, 0x92U, 0x02U },
     { 0x00U, 0x82U, 0x02U }
+};
+
+static const struct RX_SPICMD rx_spicmd_table[ CANDRV_RX_NUMOF_ITEMS ] = {
+    { SPICMD_READ_RX0_ID, SPICMD_READ_RX0_CONTENT },
+    { SPICMD_READ_RX1_ID, SPICMD_READ_RX1_CONTENT }
 };
 
 
@@ -243,7 +253,7 @@ candrv_result_t mcp2515_change_opr_mode_blocking( const uint8_t mode ) {
 
 candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate ) {
 
-    if ( MCP2515_CAN_BAUDRATE_INDEX_MIN > baudrate || MCP2515_CAN_BAUDRATE_INDEX_MAX < baudrate ) {
+    if ( MCP2515_CAN_BAUDRATE_MINOF_IDX > baudrate || MCP2515_CAN_BAUDRATE_MAXOF_IDX < baudrate ) {
 
         return CANDRV_FAILURE;
     }
@@ -304,15 +314,15 @@ candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const u
 static bool is_valid_can_id( const can_message_t *const msg ) {
 
     return (   ( NULL != msg )
-            && (   ( CAN_FORMAT_KIND_STANDARD  == ( msg->kind ) &&  STANDARD_CAN_ID_MAX >= ( msg->id ) )
-                || ( CAN_FORMAT_KIND_EXTENSION == ( msg->kind ) && EXTENSION_CAN_ID_MAX >= ( msg->id ) ) ) )
+            && (   ( CAN_KIND_STD  == ( msg->kind ) &&  STANDARD_CAN_ID_MAX >= ( msg->id ) )
+                || ( CAN_KIND_EXT == ( msg->kind ) && EXTENSION_CAN_ID_MAX >= ( msg->id ) ) ) )
         ? true : false;
 }
 
 static bool is_valid_can_message( const can_message_t *const msg ) {
 
-    return (   ( true == is_valid_can_id( msg ) ) && ( CAN_FORMAT_KIND_INDEX_MIN <= ( msg->kind ) ) && ( CAN_FORMAT_KIND_INDEX_MAX >= ( msg->kind ) )
-            && ( CAN_CONTENT_LEN_MAX >= ( msg->length ) ) && ( ( CAN_CONTENT_LEN_MIN == ( msg->length ) ) || ( NULL != ( msg->content ) ) ) )
+    return (   ( true == is_valid_can_id( msg ) ) && ( CAN_KIND_MINOF_IDX <= ( msg->kind ) ) && ( CAN_KIND_MAXOF_IDX >= ( msg->kind ) )
+            && ( CAN_MAXOF_LEN >= ( msg->length ) ) && ( ( CAN_MINOF_LEN == ( msg->length ) ) || ( NULL != ( msg->content ) ) ) )
         ? true : false;
 }
 
@@ -329,7 +339,7 @@ static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_
 
     can_id = msg->id;
 
-    if ( CAN_FORMAT_KIND_EXTENSION == ( msg->kind ) ) {
+    if ( CAN_KIND_EXT == ( msg->kind ) ) {
         
         /*--------------------------*/
         /* Case of extended format. */
@@ -482,82 +492,63 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
     rp2040_end_spi_commands();
 }
 
+static uint32_t build_ext_can_id( uint8_t eid0, uint8_t eid8, uint8_t sidl, uint8_t sidh ) {
+
+    return (uint32_t)(
+        (uint32_t)( (uint32_t)( (uint32_t)sidh << 21U ) & 0x1FE00000UL )
+      | (uint32_t)( (uint32_t)( (uint32_t)sidl << 13U ) & 0x001C0000UL )
+      | (uint32_t)( (uint32_t)( (uint32_t)sidl << 16U ) & 0x00030000UL )
+      | (uint32_t)( (uint32_t)( (uint32_t)eid8 <<  8U ) & 0x0000FF00UL )
+      | (uint32_t)(             (uint32_t)eid0          & 0x000000FFUL )
+    );
+}
+
+static uint32_t build_std_can_id( uint8_t sidl, uint8_t sidh ) {
+
+    return (uint32_t)(
+        (uint32_t)( (uint32_t)( (uint32_t)sidh << 3U ) & 0x000007F8UL )
+      | (uint32_t)( (uint32_t)( (uint32_t)sidl >> 5U ) & 0x00000007UL )
+    );
+}
+
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
 
-    uint8_t cmd;
-    uint8_t buf[ RXBUF_NUMOF_ITEMS ];
-    uint8_t content[8] = { CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT, CAN_NO_CONTENT };
+    struct RX_SPICMD cmd;
+    uint8_t id_buf[ 5U ];
 
-    if( NULL == msg ) {
-
-        return CANDRV_FAILURE;
-    }
-
-    switch ( rx_idx ) {
-
-    case CANDRV_RX_0:
-
-        cmd = SPICMD_READ_RX0_ID;
-        break;
-
-    case CANDRV_RX_1:
-
-        cmd = SPICMD_READ_RX1_ID;
-        break;
-
-    default:
+    if( ( NULL == msg ) || ( NULL == msg->content ) || ( CANDRV_RX_MINOF_IDX > rx_idx ) || ( CANDRV_RX_MAXOF_IDX < rx_idx ) ) {
 
         return CANDRV_FAILURE;
     }
+
+    cmd = rx_spicmd_table[ rx_idx ];
 
     rp2040_begin_spi_commands();
 
-    rp2040_write_spi( cmd );
-    rp2040_read_array_spi( buf, (uint8_t)sizeof( buf ) );
+    rp2040_write_spi( cmd.read_id );
+    rp2040_read_array_spi( id_buf, (uint8_t)sizeof( id_buf ) );
 
     rp2040_end_spi_commands();
 
-    /* Begin extract CAN id. */
-    msg->id = (uint32_t)( (uint32_t)( buf[ RXBUF_SIDL_IDX ] >> 5U ) & 0x7UL );
-    msg->id = (uint32_t)( msg->id | (uint32_t) ( (uint32_t)( (uint32_t)buf[ RXBUF_SIDH_IDX ] << 3U ) & 0x7F8UL ) );
-
-    if ( 0U < (uint8_t)( buf[ RXBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) ) {
-
-        /*--------------------------*/
-        /* Case of extended format. */
-        /*--------------------------*/
-        msg->kind = CAN_FORMAT_KIND_EXTENSION;
-
-        msg->id = (uint32_t)( (uint32_t)( msg->id ) << 18U );
-        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( buf[ RXBUF_EID0_IDX ] & 0xFFU ) );
-        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( (uint32_t)( (uint32_t)buf[ RXBUF_EID8_IDX ] <<  8U ) & 0x0FF00UL ) );
-        msg->id = (uint32_t)( ( msg->id ) | (uint32_t)( (uint32_t)( (uint32_t)buf[ RXBUF_SIDL_IDX ] << 16U ) & 0x30000UL ) );
-    }
-    else {
-
-        /*--------------------------*/
-        /* Case of standard format. */
-        /*--------------------------*/
-        msg->kind = CAN_FORMAT_KIND_STANDARD;
-    }
-    /* End extract CAN id. */
-
     /* Content length. */
-    msg->length = buf[ RXBUF_DLC_IDX ];
+    msg->length = id_buf[ RXBUF_DLC_IDX ];
 
-    /* Begin extract CAN content. */
-    for ( uint8_t i = 0U; i < CAN_CONTENT_LEN_MAX; i++ ) {
+    /* CAN kind. */
+    msg->kind = ( 0U < ( id_buf[ RXBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) ) ? CAN_KIND_EXT : CAN_KIND_STD;
 
-        // if ( msg->length > i ) {
+    /* CAN id. */
+    msg->id = ( CAN_KIND_STD == msg->kind ) ? build_std_can_id : build_ext_can_id;
 
-            msg->content[ i ] = buf[ (uint8_t)( RXBUF_D0_IDX + i ) ];
-        // }
-        // else {
+    /* CAN content. */
+    if ( 0U < msg->length ) {
 
-        //     msg->content[ i ] = CAN_NO_CONTENT;
-        // }
+        rp2040_begin_spi_commands();
+
+        rp2040_write_spi( cmd.read_content );
+        rp2040_read_array_spi( msg->content, msg->length );
+
+        rp2040_end_spi_commands();
     }
-    /* End extract CAN content. */
 
     return CANDRV_SUCCESS;
 }

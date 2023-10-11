@@ -14,7 +14,7 @@
 #include <string.h>
 
 bool is_received = false;
-can_message_t recv_msg = { CAN_FORMAT_KIND_STANDARD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
+can_message_t recv_msg = { CAN_KIND_STD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
 
 void callback( uint gpio, uint32_t event_mask ) {
 
@@ -31,7 +31,7 @@ void callback( uint gpio, uint32_t event_mask ) {
 int main() {
 
     bool is_available_local_msg = false;
-    can_message_t local_msg = { CAN_FORMAT_KIND_STANDARD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
+    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
     uint32_t rt = time_us_32();
     uint32_t prert = rt;
 
@@ -52,7 +52,7 @@ int main() {
     // そうしんめっせ作成
     can_message_t send_msg;
     uint8_t content[8] = { 0xA1, 0xB2, 0xC3, 0xFF, 0x00, 0x45, 0xEA, 0x55 };
-    send_msg.kind = CAN_FORMAT_KIND_STANDARD;
+    send_msg.kind = CAN_KIND_STD;
     send_msg.id = 0x295;
     send_msg.length = 8;
     send_msg.content = content;
