@@ -60,9 +60,9 @@ uint8_t mcp2515_read_register( const uint8_t addr );
 void mcp2515_write_register( const uint8_t addr, const uint8_t val );
 void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, const uint8_t val );
 uint8_t mcp2515_get_opr_mode( void );
-candrv_result_t mcp2515_reset_blocking( void );
+candrv_result_t mcp2515_reset( void );
 uint8_t mcp2515_get_opr_mode( void );
-candrv_result_t mcp2515_change_opr_mode_blocking( const uint8_t mode );
+candrv_result_t mcp2515_change_opr_mode( const uint8_t mode );
 candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate );
 candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const uint8_t priority );
 

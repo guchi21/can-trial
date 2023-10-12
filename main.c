@@ -14,7 +14,7 @@
 #include <string.h>
 
 bool is_received = false;
-can_message_t recv_msg = { CAN_KIND_STD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
+can_message_t recv_msg = { CAN_KIND_STD, 0U, 0U, { 0U } };
 
 void callback( uint gpio, uint32_t event_mask ) {
 
@@ -31,7 +31,7 @@ void callback( uint gpio, uint32_t event_mask ) {
 int main() {
 
     bool is_available_local_msg = false;
-    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, { 0U,0U,0U,0U,0U,0U,0U,0U } };
+    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, { 0U } };
     uint32_t rt = time_us_32();
     uint32_t prert = rt;
 

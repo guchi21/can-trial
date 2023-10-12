@@ -26,7 +26,7 @@ candrv_result_t candrv_init() {
 
     rp2040_init_spi();
 
-    to_be_continued = ( to_be_continued && mcp2515_reset_blocking() ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_reset() ) ? true : false;
 
     to_be_continued = ( to_be_continued && mcp2515_change_can_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) ? true : false;
 
@@ -40,7 +40,7 @@ candrv_result_t candrv_init() {
         candrv_set_irq_enabled( CANDRV_IRQ_RX0_FULL, true );
     }
 
-    to_be_continued = ( to_be_continued && mcp2515_change_opr_mode_blocking( OPR_MODE_NORMAL ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_change_opr_mode( OPR_MODE_NORMAL ) ) ? true : false;
 
     return to_be_continued ? CANDRV_SUCCESS : CANDRV_FAILURE;
 }

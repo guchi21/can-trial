@@ -10,10 +10,6 @@
 /* Macro definitions                                                */
 /*==================================================================*/
 
-/* Related CAN content length definitions */
-#define CAN_MINOF_LEN                   ( 0U )                  /* Minimum length of the content of CAN message.  */
-#define CAN_MAXOF_LEN                   ( 8U )                  /* Maximum length of the content of CAN message.  */
-
 
 /*==================================================================*/
 /* Type definitions                                                 */
