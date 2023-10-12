@@ -46,10 +46,10 @@ void rp2040_end_spi_commands();
 uint8_t rp2040_read_spi();
 
 /*! \brief Read bytes from SPI.
- * \param array read values
- * \param length read bytes length
+ * \param n read bytes length
+ * \param buf read values
  */
-void rp2040_read_array_spi( uint8_t *const array, const uint8_t length );
+void rp2040_read_array_spi( const uint8_t n, uint8_t buf[n] );
 
 /*! \brief Write a byte to SPI.
  * \param val write value

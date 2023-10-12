@@ -27,24 +27,16 @@
 /*==================================================================*/
 
 /* Related CAN id definitions */
-#define STANDARD_CAN_ID_MAX         ( 0x7FFULL )        /* Maximum value of the standard CAN ID.    */
-#define EXTENSION_CAN_ID_MAX        ( 0x1FFFFFFFULL )   /* Maximum value of the extension CAN ID.   */
+#define MAXOF_STD_CAN_ID         ( 0x7FFULL )        /* Maximum value of the standard CAN ID.    */
+#define MAXOF_EXT_CAN_ID        ( 0x1FFFFFFFULL )   /* Maximum value of the extension CAN ID.   */
 
-/* Index within RX buffer. */
-#define RXBUF_SIDH_IDX              (  0U )
-#define RXBUF_SIDL_IDX              (  1U )
-#define RXBUF_EID8_IDX              (  2U )
-#define RXBUF_EID0_IDX              (  3U )
-#define RXBUF_DLC_IDX               (  4U )
-#define RXBUF_D0_IDX                (  5U )
-#define RXBUF_D1_IDX                (  6U )
-#define RXBUF_D2_IDX                (  7U )
-#define RXBUF_D3_IDX                (  8U )
-#define RXBUF_D4_IDX                (  9U )
-#define RXBUF_D5_IDX                ( 10U )
-#define RXBUF_D6_IDX                ( 11U )
-#define RXBUF_D7_IDX                ( 12U )
-#define RXBUF_NUMOF_ITEMS           ( 13U )
+/* Index of the buffer corresponding to the CAN ID on the register. */
+#define IDBUF_SIDH_IDX              ( 0U )
+#define IDBUF_SIDL_IDX              ( 1U )
+#define IDBUF_EID8_IDX              ( 2U )
+#define IDBUF_EID0_IDX              ( 3U )
+#define IDBUF_DLC_IDX               ( 4U )
+#define IDBUF_NUMOF_ITEMS           ( 5U )
 
 /*==================================================================*/
 /* Type definitions                                                 */
@@ -69,6 +61,19 @@ struct RX_SPICMD {
     uint8_t read_content;
 };
 
+struct TX_SPICMD {
+    uint8_t write_id;
+    uint8_t write_content;
+};
+
+struct TX_REQ {
+    uint8_t cmd;
+    uint8_t ctrl_reg;
+    uint8_t maskof_inte_reg;
+    uint8_t maskof_intf_reg;
+    uint8_t maskof_ctrl_reg;
+};
+
 
 /*==================================================================*/
 /* Const definitions                                                */
@@ -90,6 +95,18 @@ static const can_baudrate_reg_t can_baudrates[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS 
 static const struct RX_SPICMD rx_spicmd_table[ CANDRV_RX_NUMOF_ITEMS ] = {
     { SPICMD_READ_RX0_ID, SPICMD_READ_RX0_CONTENT },
     { SPICMD_READ_RX1_ID, SPICMD_READ_RX1_CONTENT }
+};
+
+static const struct TX_SPICMD tx_spicmd_table[ CANDRV_TX_NUMOF_ITEMS ] = {
+    { SPICMD_WRITE_TX0_ID, SPICMD_WRITE_TX0_CONTENT },
+    { SPICMD_WRITE_TX1_ID, SPICMD_WRITE_TX1_CONTENT },
+    { SPICMD_WRITE_TX2_ID, SPICMD_WRITE_TX2_CONTENT }
+};
+
+static const struct TX_REQ tx_req_table[ CANDRV_TX_NUMOF_ITEMS ] = {
+    { SPICMD_REQ_TX0, REG_TXB0CTRL_FLGS, MASKOF_CANINTE_TX0IF, MASKOF_CANINTF_TX0IF, MASKOF_TXB0CTRL_TXP },
+    { SPICMD_REQ_TX1, REG_TXB1CTRL_FLGS, MASKOF_CANINTE_TX1IF, MASKOF_CANINTF_TX1IF, MASKOF_TXB1CTRL_TXP },
+    { SPICMD_REQ_TX2, REG_TXB2CTRL_FLGS, MASKOF_CANINTE_TX2IF, MASKOF_CANINTF_TX2IF, MASKOF_TXB2CTRL_TXP }
 };
 
 
@@ -311,59 +328,36 @@ candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const u
     return CANDRV_SUCCESS;
 }
 
-static bool is_valid_can_id( const can_message_t *const msg ) {
 
-    return (   ( NULL != msg )
-            && (   ( CAN_KIND_STD  == ( msg->kind ) &&  STANDARD_CAN_ID_MAX >= ( msg->id ) )
-                || ( CAN_KIND_EXT == ( msg->kind ) && EXTENSION_CAN_ID_MAX >= ( msg->id ) ) ) )
-        ? true : false;
-}
+static candrv_result_t build_can_id_reg( const uint32_t can_id, const can_format_kind_t can_kind,
+                                         can_id_reg_t *const id_reg ) {
 
-static bool is_valid_can_message( const can_message_t *const msg ) {
-
-    return (   ( true == is_valid_can_id( msg ) ) && ( CAN_KIND_MINOF_IDX <= ( msg->kind ) ) && ( CAN_KIND_MAXOF_IDX >= ( msg->kind ) )
-            && ( CAN_MAXOF_LEN >= ( msg->length ) ) && ( ( CAN_MINOF_LEN == ( msg->length ) ) || ( NULL != ( msg->content ) ) ) )
-        ? true : false;
-}
-
-static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_reg_t *const id_reg ) {
-
-    uint32_t can_id;
-
-    /* Begin verify arguments. */
-    if ( false == is_valid_can_message( msg ) || NULL == id_reg ) {
+    if ( ( CAN_KIND_MINOF_IDX > can_kind ) || ( CAN_KIND_MAXOF_IDX < can_kind )
+      || ( NULL == id_reg )
+      || ( CAN_KIND_STD == can_kind && can_id > MAXOF_STD_CAN_ID )
+      || ( CAN_KIND_EXT == can_kind && can_id > MAXOF_EXT_CAN_ID ) ) {
 
         return CANDRV_FAILURE;
     }
-    /* End verify arguments. */
 
-    can_id = msg->id;
-
-    if ( CAN_KIND_EXT == ( msg->kind ) ) {
-        
-        /*--------------------------*/
-        /* Case of extended format. */
-        /*--------------------------*/
-        id_reg->eid0 = (uint8_t)( can_id & 0xFFU );
-        id_reg->eid8 = (uint8_t)( (uint8_t)( can_id >> 8 ) & 0xFFU );
-
-        /* Begin SIDL */
-        id_reg->sidl = (uint8_t)( (uint8_t)( can_id >> 16U ) & 0x03U );                             /* Bit0 to Bit1 */
-        id_reg->sidl = (uint8_t)( id_reg->sidl | MASKOF_SIDL_IDE );                                 /* Bit2 to Bit4 */
-        id_reg->sidl = (uint8_t)( id_reg->sidl + (uint8_t)( (uint8_t)( can_id >> 13U ) & 0xE0U ) ); /* Bit5 to Bit7 */
-        /* End SIDL */
-
-        id_reg->sidh = (uint8_t)( (uint8_t)( can_id >> 21 ) & 0xFFU );
-    } 
-    else {
-
+    if ( CAN_KIND_STD == can_kind ) {
         /*--------------------------*/
         /* Case of standard format. */
         /*--------------------------*/
         id_reg->eid0 = 0U;
         id_reg->eid8 = 0U;
-        id_reg->sidl = (uint8_t)( (uint8_t)( can_id << 5 ) & 0xE0U );
-        id_reg->sidh = (uint8_t)( (uint8_t)( can_id >> 3 ) & 0xFFU );
+        id_reg->sidl = (uint8_t)( (uint8_t)( can_id << 5U ) & 0xE0U );
+        id_reg->sidh = (uint8_t)( can_id >> 3U );
+    } 
+    else {
+        /*--------------------------*/
+        /* Case of extended format. */
+        /*--------------------------*/
+        id_reg->eid0 = (uint8_t)can_id;
+        id_reg->eid8 = (uint8_t)( can_id >> 8U );
+        id_reg->sidl = (uint8_t)( (uint8_t)( (uint8_t)( can_id >> 16U ) & 0x03U ) | MASKOF_SIDL_IDE
+                                | (uint8_t)( (uint8_t)( can_id >> 13U ) & 0xE0U ) );
+        id_reg->sidh = (uint8_t)( can_id >> 21U );
     }
 
     return CANDRV_SUCCESS;
@@ -371,128 +365,74 @@ static candrv_result_t build_can_id_reg( const can_message_t *const msg, can_id_
 
 candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {
 
+    if( ( CANDRV_TX_MINOF_IDX > tx_idx ) || ( CANDRV_TX_MAXOF_IDX < tx_idx ) || ( NULL == msg )
+     || ( CAN_KIND_MINOF_IDX > ( msg->kind ) ) || ( CAN_KIND_MAXOF_IDX < ( msg->kind ) ) ) {
+
+        return CANDRV_FAILURE;
+    }
+
+    const struct TX_SPICMD cmd = tx_spicmd_table[ tx_idx ];
     can_id_reg_t id_reg;
-    uint8_t id_buf[ 5 ];
-    uint8_t cmd_write_id;
-    uint8_t cmd_write_buf;
 
-    if ( CANDRV_FAILURE == build_can_id_reg( msg, &id_reg ) ) {
+    /* Build CAN id. */
+    if ( CANDRV_FAILURE == build_can_id_reg( msg->id, msg->kind, &id_reg ) ) {
 
         return CANDRV_FAILURE;
     }
 
-    switch ( tx_idx ) {
-
-    case CANDRV_TX_0:
-
-        cmd_write_id = SPICMD_WRITE_TX0_ID;
-        cmd_write_buf = SPICMD_WRITE_TX0_CONTENT;
-        break;
-
-    case CANDRV_TX_1:
-
-        cmd_write_id = SPICMD_WRITE_TX1_ID;
-        cmd_write_buf = SPICMD_WRITE_TX1_CONTENT;
-        break;
-
-    case CANDRV_TX_2:
-
-        cmd_write_id = SPICMD_WRITE_TX2_ID;
-        cmd_write_buf = SPICMD_WRITE_TX2_CONTENT;
-        break;
-
-    default:
-
-        return CANDRV_FAILURE;
-    }
-
-    id_buf[0] = id_reg.sidh;
-    id_buf[1] = id_reg.sidl;
-    id_buf[2] = id_reg.eid8;
-    id_buf[3] = id_reg.eid0;
-    id_buf[4] = msg->length;
+    const uint8_t id_buf[ IDBUF_NUMOF_ITEMS ] 
+        = { id_reg.sidh, id_reg.sidl, id_reg.eid8, id_reg.eid0, msg->length };
 
     rp2040_begin_spi_commands();
-
-    rp2040_write_spi( cmd_write_id );
-    rp2040_write_array_spi( id_buf, (uint8_t)sizeof( id_buf ) );
-
+    rp2040_write_spi( cmd.write_id );
+    rp2040_write_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
     rp2040_end_spi_commands();
-    
-    if ( 0U < ( msg->length ) ) {
 
-        rp2040_begin_spi_commands();
 
-        rp2040_write_spi( cmd_write_buf );
-        rp2040_write_array_spi( msg->content, msg->length );
 
-        rp2040_end_spi_commands();
+    if ( ( CAN_MINOF_LEN <= ( msg->length ) ) && ( CAN_MAXOF_LEN >= ( msg->length ) ) ) {
+
+
     }
+    
+    rp2040_begin_spi_commands();
+    rp2040_write_spi( cmd.write_content );
+    rp2040_write_array_spi( msg->length, msg->content );
+    rp2040_end_spi_commands();
 
-    return true;
+    return CANDRV_SUCCESS;
 }
 
 candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
-    uint8_t cmd;
-    uint8_t ctrl_reg;
-    uint8_t maskof_int_e_reg;
-    uint8_t maskof_int_f_reg;
-    uint8_t maskof_req;
-
-    switch ( tx_idx ) {
-
-    case CANDRV_TX_0:
-
-        cmd = SPICMD_REQ_TX0;
-        ctrl_reg = REG_TXB0CTRL_FLGS;
-        maskof_int_e_reg = MASKOF_CANINTE_TX0IF;
-        maskof_int_f_reg = MASKOF_CANINTF_TX0IF;
-        maskof_req = MASKOF_TXB0CTRL_TXP;
-        break;
-
-    case CANDRV_TX_1:
-
-        cmd = SPICMD_REQ_TX1;
-        ctrl_reg = REG_TXB1CTRL_FLGS;
-        maskof_int_e_reg = MASKOF_CANINTE_TX1IF;
-        maskof_int_f_reg = MASKOF_CANINTF_TX1IF;
-        maskof_req = MASKOF_TXB1CTRL_TXP;
-        break;
-
-    case CANDRV_TX_2:
-
-        cmd = SPICMD_REQ_TX2;
-        ctrl_reg = REG_TXB1CTRL_FLGS;
-        maskof_int_e_reg = MASKOF_CANINTE_TX2IF;
-        maskof_int_f_reg = MASKOF_CANINTF_TX2IF;
-        maskof_req = MASKOF_TXB2CTRL_TXP;
-        break;
-
-    default:
+    if( ( CANDRV_TX_MINOF_IDX > tx_idx ) || ( CANDRV_TX_MAXOF_IDX < tx_idx ) ) {
 
         return CANDRV_FAILURE;
     }
 
-    if ( 0U < (uint8_t)( mcp2515_read_register( ctrl_reg ) & maskof_req ) ) {
+    const struct TX_REQ tx_req = tx_req_table[ tx_idx ];
 
+    if (   ( 0U < ( mcp2515_read_register( tx_req.ctrl_reg  ) & tx_req.maskof_ctrl_reg ) )
+         | ( 0U < ( mcp2515_read_register( REG_CANINTF_FLGS ) & tx_req.maskof_intf_reg ) )
+    ) {
+
+        /* If already requested. */
+        /* If there is an outstanding transmission completion interrupt. */
         return CANDRV_FAILURE;
     }
 
-    // tmp
-    mcp2515_modbits_register( REG_CANINTE_FLGS, maskof_int_e_reg, 0xFF );  // Enable TX INT.
-    mcp2515_modbits_register( REG_CANINTF_FLGS, maskof_int_f_reg, 0 );  // Clear int TX.
-    // tmp
+    /* Enabled TX interrupt. */
+    mcp2515_modbits_register( REG_CANINTE_FLGS, tx_req.maskof_intf_reg, 0xFFU );
 
-
+    /* Requested send CAN message. */
     rp2040_begin_spi_commands();
-
-    rp2040_write_spi( cmd );
-
+    rp2040_write_spi( tx_req.cmd );
     rp2040_end_spi_commands();
+
+    return CANDRV_SUCCESS;
 }
 
-static uint32_t build_ext_can_id( uint8_t eid0, uint8_t eid8, uint8_t sidl, uint8_t sidh ) {
+static uint32_t build_ext_can_id( const uint8_t eid0, const uint8_t eid8, const uint8_t sidl, const uint8_t sidh ) {
 
     return (uint32_t)(
         (uint32_t)( (uint32_t)( (uint32_t)sidh << 21U ) & 0x1FE00000UL )
@@ -503,7 +443,7 @@ static uint32_t build_ext_can_id( uint8_t eid0, uint8_t eid8, uint8_t sidl, uint
     );
 }
 
-static uint32_t build_std_can_id( uint8_t sidl, uint8_t sidh ) {
+static uint32_t build_std_can_id( const uint8_t sidl, const uint8_t sidh ) {
 
     return (uint32_t)(
         (uint32_t)( (uint32_t)( (uint32_t)sidh << 3U ) & 0x000007F8UL )
@@ -513,42 +453,51 @@ static uint32_t build_std_can_id( uint8_t sidl, uint8_t sidh ) {
 
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
 
-    struct RX_SPICMD cmd;
-    uint8_t id_buf[ 5U ];
-
-    if( ( NULL == msg ) || ( NULL == msg->content ) || ( CANDRV_RX_MINOF_IDX > rx_idx ) || ( CANDRV_RX_MAXOF_IDX < rx_idx ) ) {
+    if( ( CANDRV_RX_MINOF_IDX > rx_idx ) || ( CANDRV_RX_MAXOF_IDX < rx_idx ) || ( NULL == msg ) ) {
 
         return CANDRV_FAILURE;
     }
 
-    cmd = rx_spicmd_table[ rx_idx ];
+    const struct RX_SPICMD cmd = rx_spicmd_table[ rx_idx ];
+    uint8_t id_buf[ IDBUF_NUMOF_ITEMS ];
+    uint8_t *const content = msg->content;
+    uint8_t length;
 
     rp2040_begin_spi_commands();
-
     rp2040_write_spi( cmd.read_id );
-    rp2040_read_array_spi( id_buf, (uint8_t)sizeof( id_buf ) );
-
+    rp2040_read_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
     rp2040_end_spi_commands();
 
     /* Content length. */
-    msg->length = id_buf[ RXBUF_DLC_IDX ];
-
-    /* CAN kind. */
-    msg->kind = ( 0U < ( id_buf[ RXBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) ) ? CAN_KIND_EXT : CAN_KIND_STD;
-
-    /* CAN id. */
-    msg->id = ( CAN_KIND_STD == msg->kind ) ? build_std_can_id : build_ext_can_id;
+    length = id_buf[ IDBUF_DLC_IDX ];
+    msg->length = length;
 
     /* CAN content. */
-    if ( 0U < msg->length ) {
+    if ( ( NULL != content ) && ( CAN_MINOF_LEN < length ) && ( CAN_MAXOF_LEN >= length ) ) {
 
         rp2040_begin_spi_commands();
-
         rp2040_write_spi( cmd.read_content );
-        rp2040_read_array_spi( msg->content, msg->length );
-
+        rp2040_read_array_spi( length, content );
         rp2040_end_spi_commands();
     }
+    else if ( CAN_MINOF_LEN == length ) {
+
+        /* No processing. */
+    }
+    else {
+
+        return CANDRV_FAILURE;
+    }
+
+    /* CAN kind. */
+    msg->kind = ( 0U < ( id_buf[ IDBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) )
+        ? CAN_KIND_EXT : CAN_KIND_STD;
+
+    /* CAN id. */
+    msg->id = ( CAN_KIND_STD == ( msg->kind ) )
+        ? build_std_can_id( id_buf[ IDBUF_SIDL_IDX ], id_buf[ IDBUF_SIDH_IDX ] )
+        : build_ext_can_id( id_buf[ IDBUF_EID0_IDX ], id_buf[ IDBUF_EID8_IDX ],
+                            id_buf[ IDBUF_SIDL_IDX ], id_buf[ IDBUF_SIDH_IDX ] );
 
     return CANDRV_SUCCESS;
 }

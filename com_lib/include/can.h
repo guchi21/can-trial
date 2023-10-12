@@ -14,8 +14,6 @@
 #define CAN_MINOF_LEN                   ( 0U )                  /* Minimum length of the content of CAN message.  */
 #define CAN_MAXOF_LEN                   ( 8U )                  /* Maximum length of the content of CAN message.  */
 
-#define CAN_INVALID_ID                  ( UINT32_MAX )
-
 
 /*==================================================================*/
 /* Type definitions                                                 */
