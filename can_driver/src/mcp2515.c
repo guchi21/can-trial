@@ -46,7 +46,7 @@
 /* Type definitions                                                 */
 /*==================================================================*/
 
-typedef struct{ uint8_t sidh, sidl, eid8, eid0 } can_id_reg_t;
+typedef struct{ uint8_t sidh, sidl, eid8, eid0; } can_id_reg_t;
 
 
 /*==================================================================*/
@@ -210,7 +210,7 @@ candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE bau
     /* End validate arguments. */
 
 
-    struct CAN_BAUDRATE_CTX { uint8_t c1, c2, c3 };
+    struct CAN_BAUDRATE_CTX { uint8_t c1, c2, c3; };
 
     const struct CAN_BAUDRATE_CTX baudrate_ctx_table[ MCP2515_CAN_BAUDRATE_NUMOF_ITEMS ] = {
         { 0xA7U, 0XBFU, 0x07U }, { 0x31U, 0XA4U, 0X04U }, { 0x18U, 0XA4U, 0x04U }, { 0x09U, 0XA4U, 0x04U }, { 0x04U, 0x9EU, 0x03U },
@@ -294,37 +294,34 @@ static candrv_result_t build_can_id_reg( const uint32_t can_id, const can_format
 
 static bool is_available_tx( const enum CANDRV_TX tx_idx ) {
 
-    const uint8_t irqs = mcp2515_read_register( REG_CANINTF_FLGS );
-    uint8_t maskof_irq;
+    /* Begin validate arguments. */
+    if( ( CANDRV_TX_MINOF_IDX > tx_idx ) || ( CANDRV_TX_MAXOF_IDX < tx_idx ) ) {
 
+        return CANDRV_FAILURE;
+    }
+    /* End validate arguments. */
 
-    switch ( tx_idx ) {
-    
-    case CANDRV_TX_0:
+    struct reg_ctx_t { uint8_t send_req, maskof_send_req, maskof_irq_occered; };
 
-        maskof_irq = MASKOF_CANINTF_TX0IF;
-        break;
-    
-    case CANDRV_TX_1:
+    const struct reg_ctx_t reg_ctx_table[ CANDRV_TX_NUMOF_ITEMS ] = {
+        { REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXP, MASKOF_CANINTF_TX0IF },
+        { REG_TXB1CTRL_FLGS, MASKOF_TXB1CTRL_TXP, MASKOF_CANINTF_TX1IF },
+        { REG_TXB2CTRL_FLGS, MASKOF_TXB2CTRL_TXP, MASKOF_CANINTF_TX2IF } };
 
-        maskof_irq = MASKOF_CANINTF_TX0IF;
-        break;
-    
-    case CANDRV_TX_2:
+    const struct reg_ctx_t reg_ctx = reg_ctx_table[ tx_idx ];
 
-        maskof_irq = MASKOF_CANINTF_TX0IF;
-        break;
+    if (   ( 0U < ( mcp2515_read_register( reg_ctx.send_req ) & reg_ctx.maskof_send_req    ) )
+        || ( 0U < ( mcp2515_read_register( REG_CANINTF_FLGS ) & reg_ctx.maskof_irq_occered ) ) ) {
 
-    default:
-
+        /* If already requested. */
+        /* If there is an outstanding transmission completion interrupt. */
         return false;
     }
 
-
-    return ( 0U == ( irqs & maskof_irq ) ) ? true : false;
+    return true;
 }
 
-candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {
+candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {
 
     /* Begin validate arguments. */
     if( ( CANDRV_TX_MINOF_IDX > tx_idx ) || ( CANDRV_TX_MAXOF_IDX < tx_idx ) || ( NULL == msg )
@@ -335,16 +332,13 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messag
     /* End validate arguments. */
 
 
-    struct TX_SPICMD { uint8_t write_id, write_content };
-  
-    static const struct TX_SPICMD tx_spicmd_table[ CANDRV_TX_NUMOF_ITEMS ] = {
-        { SPICMD_WRITE_TX0_ID, SPICMD_WRITE_TX0_CONTENT },
-        { SPICMD_WRITE_TX1_ID, SPICMD_WRITE_TX1_CONTENT },
-        { SPICMD_WRITE_TX2_ID, SPICMD_WRITE_TX2_CONTENT }
-    };
+    const uint8_t spicmd_write_id_table[ CANDRV_TX_NUMOF_ITEMS ] = {
+        SPICMD_WRITE_TX0_ID, SPICMD_WRITE_TX1_ID, SPICMD_WRITE_TX2_ID };
 
-    const struct TX_SPICMD spicmd = tx_spicmd_table[ tx_idx ];  /* SPI commands for write to TX buffer. */
-    can_id_reg_t id_reg;                                        /* CAN id in the register format.       */
+    const uint8_t spicmd_write_content_table[ CANDRV_TX_NUMOF_ITEMS ] = {
+        SPICMD_WRITE_TX0_CONTENT, SPICMD_WRITE_TX1_CONTENT, SPICMD_WRITE_TX2_CONTENT };
+
+    can_id_reg_t id_reg;    /* CAN id in the register format.       */
 
 
     /* Confirm available of TX. */
@@ -358,7 +352,7 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messag
       && ( MINOF_CAN_LEN < ( msg->length ) ) && ( MAXOF_CAN_LEN >= ( msg->length ) ) ) {
 
         rp2040_begin_spi_commands();
-        rp2040_write_spi( spicmd.write_content );
+        rp2040_write_spi( spicmd_write_content_table[ tx_idx ] );
         rp2040_write_array_spi( msg->length, msg->content );
         rp2040_end_spi_commands();
     }
@@ -384,7 +378,7 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messag
 
     /* Write to the register that CAN id and DLC. */
     rp2040_begin_spi_commands();
-    rp2040_write_spi( spicmd.write_id );
+    rp2040_write_spi( spicmd_write_id_table[ tx_idx ] );
     rp2040_write_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
     rp2040_write_spi( msg->length );
     rp2040_end_spi_commands();
@@ -393,7 +387,7 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messag
     return CANDRV_SUCCESS;
 }
 
-candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
+candrv_result_t mcp2515_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
     /* Begin validate arguments. */
     if( ( CANDRV_TX_MINOF_IDX > tx_idx ) || ( CANDRV_TX_MAXOF_IDX < tx_idx ) ) {
@@ -403,29 +397,22 @@ candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
     /* End validate arguments. */
 
 
-    struct reg_ctx_t { uint8_t cmd_send_req, send_req, maskof_send_req, maskof_irq_enabled, maskof_irq_occered; };
+    const uint8_t spicmd_table[ CANDRV_TX_NUMOF_ITEMS ] = { SPICMD_REQ_TX0, SPICMD_REQ_TX1, SPICMD_REQ_TX2 };
+    const uint8_t maskof_caninte_table[ CANDRV_TX_NUMOF_ITEMS ] 
+        = { MASKOF_CANINTE_TX0IF, MASKOF_CANINTE_TX1IF, MASKOF_CANINTE_TX2IF };
 
-    const struct reg_ctx_t reg_ctx_table[ CANDRV_TX_NUMOF_ITEMS ] = {
-        { SPICMD_REQ_TX0, REG_TXB0CTRL_FLGS, MASKOF_TXB0CTRL_TXP, MASKOF_CANINTE_TX0IF, MASKOF_CANINTF_TX0IF },
-        { SPICMD_REQ_TX1, REG_TXB1CTRL_FLGS, MASKOF_TXB1CTRL_TXP, MASKOF_CANINTE_TX1IF, MASKOF_CANINTF_TX1IF },
-        { SPICMD_REQ_TX2, REG_TXB2CTRL_FLGS, MASKOF_TXB2CTRL_TXP, MASKOF_CANINTE_TX2IF, MASKOF_CANINTF_TX2IF } };
 
-    const struct reg_ctx_t reg_ctx = reg_ctx_table[ tx_idx ];
+    if ( false == is_available_tx( tx_idx ) ) {
 
-    if (   ( 0U < ( mcp2515_read_register( reg_ctx.send_req ) & reg_ctx.maskof_send_req    ) )
-        || ( 0U < ( mcp2515_read_register( REG_CANINTF_FLGS ) & reg_ctx.maskof_irq_occered ) ) ) {
-
-        /* If already requested. */
-        /* If there is an outstanding transmission completion interrupt. */
         return CANDRV_FAILURE;
     }
 
     /* Enabled TX interrupt. */
-    mcp2515_modbits_register( REG_CANINTE_FLGS, reg_ctx.maskof_irq_enabled, 0xFFU );
+    mcp2515_modbits_register( REG_CANINTE_FLGS, maskof_caninte_table[ tx_idx ], 0xFFU );
 
     /* Requested send CAN message. */
     rp2040_begin_spi_commands();
-    rp2040_write_spi( reg_ctx.cmd_send_req );
+    rp2040_write_spi( spicmd_table[ tx_idx ] );
     rp2040_end_spi_commands();
 
     return CANDRV_SUCCESS;
@@ -450,7 +437,7 @@ static uint32_t build_std_can_id( const uint8_t sidl, const uint8_t sidh ) {
     );
 }
 
-candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
+candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
 
     /* Begin validate arguments. */
     if( ( CANDRV_RX_MINOF_IDX > rx_idx ) || ( CANDRV_RX_MAXOF_IDX < rx_idx ) || ( NULL == msg ) ) {
@@ -459,7 +446,7 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
     }
     /* End validate arguments. */
 
-    struct RX_SPICMD { uint8_t read_id, read_content };
+    struct RX_SPICMD { uint8_t read_id, read_content; };
 
     const struct RX_SPICMD rx_spicmd_table[ CANDRV_RX_NUMOF_ITEMS ] = {
         { SPICMD_READ_RX0_ID, SPICMD_READ_RX0_CONTENT },
@@ -467,7 +454,7 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
     };
 
     const struct RX_SPICMD spicmd = rx_spicmd_table[ rx_idx ];
-    uint8_t id_buf[ IDBUF_NUMOF_ITEMS ];
+    uint8_t id_buf[ IDBUF_NUMOF_ITEMS ] = { 0U };
     uint8_t *const content = msg->content;
     uint8_t length;
 
@@ -498,8 +485,7 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
     }
 
     /* CAN kind. */
-    msg->kind = ( 0U < ( id_buf[ IDBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) )
-        ? CAN_KIND_EXT : CAN_KIND_STD;
+    msg->kind = ( 0U < ( id_buf[ IDBUF_SIDL_IDX ] & MASKOF_SIDL_IDE ) ) ? CAN_KIND_EXT : CAN_KIND_STD;
 
     /* CAN id. */
     msg->id = ( CAN_KIND_STD == ( msg->kind ) )
@@ -509,3 +495,4 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
 
     return CANDRV_SUCCESS;
 }
+

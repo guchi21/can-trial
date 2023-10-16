@@ -14,6 +14,8 @@
 /* Type definitions                                                 */
 /*==================================================================*/
 
+typedef void (*rp2040_mcp2515_irq_callback_t)( void );
+
 
 /*==================================================================*/
 /* Const definitions                                                */
@@ -65,6 +67,8 @@ void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] );
 /*! \brief Register callback function for CAN interruption.
  * \param callback callback function. unregister if NULL.
  */
-void rp2040_register_can_int_callback( const gpio_irq_callback_t callback );
+void rp2040_set_can_int_callback( const gpio_irq_callback_t callback );
+
+void rp2040_init_irq( void );
 
 #endif  /* RP2040_H */

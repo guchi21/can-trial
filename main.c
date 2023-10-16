@@ -13,10 +13,17 @@
 #include <limits.h>
 #include <string.h>
 
+bool is_irq = false;
+bool is_ready_tx = true;
 bool is_received = false;
-can_message_t recv_msg = { CAN_KIND_STD, 0U, 0U, { 0U } };
+uint8_t recv_content[8] = { 0U };
+can_message_t recv_msg = { CAN_KIND_STD, 0U, 0U, recv_content };
 
-void callback( uint gpio, uint32_t event_mask ) {
+void callback( void ) {
+
+    is_irq = true;
+
+    is_ready_tx = true;
 
     candrv_get_rx_msg( CANDRV_RX_0, &recv_msg );
     is_received = true;
@@ -31,7 +38,10 @@ void callback( uint gpio, uint32_t event_mask ) {
 int main() {
 
     bool is_available_local_msg = false;
-    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, { 0U } };
+
+    uint8_t local_content[8] = { 0U };
+    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, local_content };
+
     uint32_t rt = time_us_32();
     uint32_t prert = rt;
 
@@ -47,7 +57,7 @@ int main() {
     }
 
     // コールバックとうろく
-    candrv_register_callback( callback );
+    candrv_set_irq_callback( callback );
 
     // そうしんめっせ作成
     can_message_t send_msg;
@@ -69,16 +79,14 @@ int main() {
             local_msg.length = recv_msg.length;
             memcpy( local_msg.content, recv_msg.content, 8 );
 
-            is_received = false;
             candrv_tmp_clr_rx0();
 
             restore_interrupts(interrupts);
             /* End supress interrupts. */
 
+            is_received = false;
             is_available_local_msg = true;
         }
-
-        
 
         if ( is_available_local_msg ) {
 
@@ -94,29 +102,36 @@ int main() {
         }
 
         printf(".");
-        sleep_ms( 50 );
-        uint32_t current = time_us_32();
+        busy_wait_us_32(2 * 1000 * 1000);
 
-        // メッセージ更新
-        uint8_t i1 = (uint8_t)(current & 0xff);
-        uint8_t i2 = (uint8_t)((current >> 8) & 0xff);
-        uint8_t i3 = (uint8_t)((current >> 16) & 0xff);
-        uint8_t i4 = (uint8_t)((current >> 24) & 0xff);
-        send_msg.content[4] = i1;
-        send_msg.content[5] = i2;
-        send_msg.content[6] = i3;
-        send_msg.content[7] = i4;
+        if ( true ) {
 
-        // 送信バッファにせっと
-        if( false == candrv_set_tx_msg( CANDRV_TX_0, &send_msg ) ) {
+            candrv_tmp_clr_tx0();
+            is_ready_tx = false;
 
-            printf("seterr.");
-        }
+            uint32_t current = time_us_32();
 
-        // 送信要求
-        if ( false == candrv_req_send_msg( CANDRV_TX_0 ) ) {
+            // メッセージ更新
+            uint8_t i1 = (uint8_t)(current & 0xff);
+            uint8_t i2 = (uint8_t)((current >> 8) & 0xff);
+            uint8_t i3 = (uint8_t)((current >> 16) & 0xff);
+            uint8_t i4 = (uint8_t)((current >> 24) & 0xff);
+            send_msg.content[4] = i1;
+            send_msg.content[5] = i2;
+            send_msg.content[6] = i3;
+            send_msg.content[7] = i4;
 
-            printf("reqerr.");
+            // 送信バッファにせっと
+            if( false == candrv_set_tx_msg( CANDRV_TX_0, &send_msg ) ) {
+
+                printf("seterr.");
+            }
+
+            // 送信要求
+            if ( false == candrv_req_send_msg( CANDRV_TX_0 ) ) {
+
+                printf("reqerr.");
+            }
         }
     }
 }

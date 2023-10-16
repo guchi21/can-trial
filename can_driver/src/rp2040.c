@@ -2,6 +2,10 @@
 #include "rp2040.h"
 #endif
 
+#ifndef MCP2515_IRQ_H
+#include "mcp2515_irq.h"
+#endif
+
 #ifndef _HARDWARE_SPI_H
 #include "hardware/spi.h"
 #endif
@@ -24,7 +28,7 @@
 #define GPIO_MCP2515_CS             (  5U )             /* RP2040 pin #07.  */
 #define GPIO_MCP2515_SCK            (  6U )             /* RP2040 pin #09.  */
 #define GPIO_MCP2515_MOSI           (  7U )             /* RP2040 pin #10.  */
-#define GPIO_MCP2515_INT1           ( 21U )             /* RP2040 pin #27.  */
+#define GPIO_MCP2515_INT            ( 21U )             /* RP2040 pin #27.  */
 
 
 /*==================================================================*/
@@ -94,7 +98,15 @@ void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] ) {
     }
 }
 
-void rp2040_register_can_int_callback( const gpio_irq_callback_t callback ) {
+static void gpio_irq_callback( uint gpio, uint32_t event_mask ) {
 
-    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT1, (uint32_t)GPIO_IRQ_EDGE_FALL, true, callback );
+    if ( ( GPIO_MCP2515_INT == gpio ) && ( (uint32_t)GPIO_IRQ_EDGE_FALL == event_mask ) ) {
+
+        mcp2515_irq_callback();
+    }
+}
+
+void rp2040_init_irq() {
+
+    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT, (uint32_t)GPIO_IRQ_EDGE_FALL, true, gpio_irq_callback );
 }

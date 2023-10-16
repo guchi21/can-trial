@@ -21,7 +21,7 @@
 /*==================================================================*/
 typedef bool candrv_result_t;
 
-typedef void (*can_int_callback_t)( uint gpio, uint32_t event_mask );
+typedef void (*can_irq_callback_t)( void );
 
 
 /*==================================================================*/
@@ -67,19 +67,11 @@ candrv_result_t candrv_init();
 candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg );
 candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx );
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg );
-void candrv_register_callback( const can_int_callback_t callback );
-void candrv_set_irq_enabled( enum CANDRV_IRQ irq, bool enabled );
+void candrv_set_irq_callback( const can_irq_callback_t callback );
+can_irq_callback_t candrv_get_irq_callback( void );
 
-void candrv_tmp1( can_message_t *msg );
-bool candrv_tmp2();
-void candrv_tmp3();
-void candrv_tmp4();
-void candrv_tmp5();
-void candrv_tmp6();
-void candrv_tmp_clr_exerr();
-void candrv_tmp_cancel_tx_if_msgerr( void );
-bool candrv_tmp_is_merr( void );
-bool candrv_tmp_is_err( void );
 void candrv_tmp_clr_rx0( void );
+void candrv_tmp_clr_tx0( void );
+uint8_t candrv_tmp_get_irq_reason( void );
 
 #endif  /* CAN_DRIVER_H */
