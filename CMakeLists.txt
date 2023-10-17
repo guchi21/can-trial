@@ -13,6 +13,7 @@ project( can_trial
 pico_sdk_init()
 
 add_subdirectory( com_lib )
+add_subdirectory( pico_can )
 add_subdirectory( can_driver )
 
 add_executable( can_trial main.c )

@@ -10,9 +10,7 @@
 #include "mcp2515_spi_cmd.h"
 #endif
 
-#ifndef RP2040_H
-#include "rp2040.h"
-#endif
+#include "pico_can.h"
 
 #ifndef _HARDWARE_TIMER_H
 #include "hardware/timer.h"
@@ -60,39 +58,39 @@ typedef struct{ uint8_t sidh, sidl, eid8, eid0; } can_id_reg_t;
 
 uint8_t mcp2515_read_register( const uint8_t addr ) {
 
-    rp2040_begin_spi_commands();
+    picocan_begin_spi_commands();
 
-    rp2040_write_spi( SPICMD_READ_REG );
-    rp2040_write_spi( addr );
+    picocan_write_spi( SPICMD_READ_REG );
+    picocan_write_spi( addr );
 
-    const uint8_t val = rp2040_read_spi();
+    const uint8_t val = picocan_read_spi();
 
-    rp2040_end_spi_commands();
+    picocan_end_spi_commands();
 
     return val;
 }
 
 void mcp2515_write_register( const uint8_t addr, const uint8_t val ) {
 
-    rp2040_begin_spi_commands();
+    picocan_begin_spi_commands();
 
-    rp2040_write_spi( SPICMD_WRITE_REG );
-    rp2040_write_spi( addr );
-    rp2040_write_spi( val );
+    picocan_write_spi( SPICMD_WRITE_REG );
+    picocan_write_spi( addr );
+    picocan_write_spi( val );
 
-    rp2040_end_spi_commands();
+    picocan_end_spi_commands();
 }
 
 void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, const uint8_t val ) {
 
-    rp2040_begin_spi_commands();
+    picocan_begin_spi_commands();
 
-    rp2040_write_spi( SPICMD_MODBITS_REG );
-    rp2040_write_spi( addr );
-    rp2040_write_spi( maskof_write );
-    rp2040_write_spi( val );
+    picocan_write_spi( SPICMD_MODBITS_REG );
+    picocan_write_spi( addr );
+    picocan_write_spi( maskof_write );
+    picocan_write_spi( val );
 
-    rp2040_end_spi_commands();
+    picocan_end_spi_commands();
 }
 
 uint8_t mcp2515_get_opr_mode( void ) {
@@ -123,11 +121,11 @@ static candrv_result_t verify_opr_mode( const uint8_t exp_mode ) {
 
 candrv_result_t mcp2515_reset( void ) {
 
-    rp2040_begin_spi_commands();
+    picocan_begin_spi_commands();
 
-    rp2040_write_spi( SPICMD_RESET );
+    picocan_write_spi( SPICMD_RESET );
 
-    rp2040_end_spi_commands();
+    picocan_end_spi_commands();
 
     return verify_opr_mode( OPR_MODE_CONFIG );
 }
@@ -351,10 +349,10 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messa
     if ( ( NULL != ( msg->content ) )
       && ( MINOF_CAN_LEN < ( msg->length ) ) && ( MAXOF_CAN_LEN >= ( msg->length ) ) ) {
 
-        rp2040_begin_spi_commands();
-        rp2040_write_spi( spicmd_write_content_table[ tx_idx ] );
-        rp2040_write_array_spi( msg->length, msg->content );
-        rp2040_end_spi_commands();
+        picocan_begin_spi_commands();
+        picocan_write_spi( spicmd_write_content_table[ tx_idx ] );
+        picocan_write_array_spi( msg->length, msg->content );
+        picocan_end_spi_commands();
     }
     else if ( ( MINOF_CAN_LEN == ( msg->length ) ) ) {
 
@@ -377,11 +375,11 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx, const can_messa
 
 
     /* Write to the register that CAN id and DLC. */
-    rp2040_begin_spi_commands();
-    rp2040_write_spi( spicmd_write_id_table[ tx_idx ] );
-    rp2040_write_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
-    rp2040_write_spi( msg->length );
-    rp2040_end_spi_commands();
+    picocan_begin_spi_commands();
+    picocan_write_spi( spicmd_write_id_table[ tx_idx ] );
+    picocan_write_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
+    picocan_write_spi( msg->length );
+    picocan_end_spi_commands();
 
 
     return CANDRV_SUCCESS;
@@ -411,9 +409,9 @@ candrv_result_t mcp2515_req_send_msg( const enum CANDRV_TX tx_idx ) {
     mcp2515_modbits_register( REG_CANINTE_FLGS, maskof_caninte_table[ tx_idx ], 0xFFU );
 
     /* Requested send CAN message. */
-    rp2040_begin_spi_commands();
-    rp2040_write_spi( spicmd_table[ tx_idx ] );
-    rp2040_end_spi_commands();
+    picocan_begin_spi_commands();
+    picocan_write_spi( spicmd_table[ tx_idx ] );
+    picocan_end_spi_commands();
 
     return CANDRV_SUCCESS;
 }
@@ -458,10 +456,10 @@ candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *
     uint8_t *const content = msg->content;
     uint8_t length;
 
-    rp2040_begin_spi_commands();
-    rp2040_write_spi( spicmd.read_id );
-    rp2040_read_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
-    rp2040_end_spi_commands();
+    picocan_begin_spi_commands();
+    picocan_write_spi( spicmd.read_id );
+    picocan_read_array_spi( IDBUF_NUMOF_ITEMS, id_buf );
+    picocan_end_spi_commands();
 
     /* Content length. */
     length = id_buf[ IDBUF_DLC_IDX ];
@@ -470,10 +468,10 @@ candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *
     /* CAN content. */
     if ( ( NULL != content ) && ( MINOF_CAN_LEN < length ) && ( MAXOF_CAN_LEN >= length ) ) {
 
-        rp2040_begin_spi_commands();
-        rp2040_write_spi( spicmd.read_content );
-        rp2040_read_array_spi( length, content );
-        rp2040_end_spi_commands();
+        picocan_begin_spi_commands();
+        picocan_write_spi( spicmd.read_content );
+        picocan_read_array_spi( length, content );
+        picocan_end_spi_commands();
     }
     else if ( MINOF_CAN_LEN == length ) {
 

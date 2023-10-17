@@ -1,21 +1,11 @@
-#ifndef CAN_DRIVER_H
 #include "can_driver.h"
-#endif
-
-#ifndef RP2040_H
-#include "rp2040.h"
-#endif
-
-#ifndef MCP2515_H
+#include "hardware/timer.h"
 #include "mcp2515.h"
-#endif
+#include "pico_can.h"
 
 /* temp */
 #ifndef MCP2515_REG_ADDR_H
 #include "mcp2515_reg_addr.h"
-#endif
-#ifndef _HARDWARE_TIMER_H
-#include "hardware/timer.h"
 #endif
 #ifndef MCP2515_IRQ_H
 #include "mcp2515_irq.h"
@@ -47,7 +37,7 @@ candrv_result_t candrv_init() {
 
     bool to_be_continued = true;
 
-    rp2040_init_spi();
+    picocan_init();
 
     to_be_continued = ( to_be_continued && mcp2515_reset() ) ? true : false;
 
@@ -59,8 +49,6 @@ candrv_result_t candrv_init() {
         mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_RXM, MASKOF_RXB0CTRL_RXM );
         mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
         // End trial implements
-
-        rp2040_init_irq();
 
         set_irq_enabled( CANDRV_IRQ_RX0_FULL, true );
         set_irq_enabled( CANDRV_IRQ_TX0_EMPTY, true );
@@ -122,4 +110,8 @@ void mcp2515_irq_callback( void ) {
 
         irq_callback();
     }
+}
+
+void candrv_ind_irq( void ) {
+    
 }

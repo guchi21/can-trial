@@ -1,14 +1,7 @@
-#ifndef RP2040_H
-#include "rp2040.h"
-#endif
-
-#ifndef MCP2515_IRQ_H
-#include "mcp2515_irq.h"
-#endif
-
-#ifndef _HARDWARE_SPI_H
+#include "wrapper.h"
+#include "pico/stdio.h"
+#include "hardware/gpio.h"
 #include "hardware/spi.h"
-#endif
 
 /*==================================================================*/
 /* Macro definitions                                                */
@@ -32,20 +25,20 @@
 
 
 /*==================================================================*/
-/* Type definitions                                                 */
-/*==================================================================*/
-
-
-/*==================================================================*/
-/* Const definitions                                                */
-/*==================================================================*/
-
-
-/*==================================================================*/
 /* Implements.                                                      */
 /*==================================================================*/
 
-void rp2040_init_spi() {
+static void cbk_gpio_irq( uint gpio, uint32_t event_mask ) {
+
+    if ( ( GPIO_MCP2515_INT == gpio ) && ( (uint32_t)GPIO_IRQ_EDGE_FALL == event_mask ) ) {
+
+        picocan_wrap_ind_irq();
+    }
+}
+
+void picocan_init() {
+
+    (void)stdio_init_all();
 
     spi_init( spi0, SPI_BAUDRATE );
 
@@ -56,28 +49,21 @@ void rp2040_init_spi() {
     gpio_init( GPIO_MCP2515_CS );
     gpio_set_dir( GPIO_MCP2515_CS, GPIO_OUT );
     gpio_put( GPIO_MCP2515_CS, PIN_VOLTAGE_HIGH );
+
+    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT, (uint32_t)GPIO_IRQ_EDGE_FALL, true, cbk_gpio_irq );
 }
 
-void rp2040_begin_spi_commands() {
+void picocan_begin_spi_commands() {
 
     gpio_put( GPIO_MCP2515_CS, PIN_VOLTAGE_LOW );
 }
 
-void rp2040_end_spi_commands() {
+void picocan_end_spi_commands() {
 
     gpio_put( GPIO_MCP2515_CS, PIN_VOLTAGE_HIGH );
 }
 
-uint8_t rp2040_read_spi() {
-
-    uint8_t val;
-
-    spi_read_blocking( spi0, 0U, &val, 1U );
-
-    return val;
-}
-
-void rp2040_read_array_spi( const uint8_t n, uint8_t buf[n] ) {
+void picocan_read_array_spi( const uint8_t n, uint8_t buf[n] ) {
 
     if ( 0U < n && NULL != buf ) {
 
@@ -85,12 +71,16 @@ void rp2040_read_array_spi( const uint8_t n, uint8_t buf[n] ) {
     }
 }
 
-void rp2040_write_spi( const uint8_t val ) {
+uint8_t picocan_read_spi() {
 
-    rp2040_write_array_spi( 1U, &val );
+    uint8_t val = 0U;
+
+    picocan_read_array_spi( 1U, &val );
+
+    return val;
 }
 
-void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] ) {
+void picocan_write_array_spi( const uint8_t n, const uint8_t buf[n] ) {
 
     if ( 0U < n && NULL != buf ) {
 
@@ -98,15 +88,7 @@ void rp2040_write_array_spi( const uint8_t n, const uint8_t buf[n] ) {
     }
 }
 
-static void gpio_irq_callback( uint gpio, uint32_t event_mask ) {
+void picocan_write_spi( const uint8_t val ) {
 
-    if ( ( GPIO_MCP2515_INT == gpio ) && ( (uint32_t)GPIO_IRQ_EDGE_FALL == event_mask ) ) {
-
-        mcp2515_irq_callback();
-    }
-}
-
-void rp2040_init_irq() {
-
-    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT, (uint32_t)GPIO_IRQ_EDGE_FALL, true, gpio_irq_callback );
+    picocan_write_array_spi( 1U, &val );
 }
