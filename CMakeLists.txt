@@ -12,7 +12,6 @@ project( can_trial
 # Initialize SDK.
 pico_sdk_init()
 
-add_subdirectory( com_lib )
 add_subdirectory( pico_can )
 add_subdirectory( can_driver )
 
@@ -20,7 +19,6 @@ add_executable( can_trial main.c )
 
 target_link_libraries( can_trial
     PRIVATE pico_stdlib
-    PRIVATE com_lib
     PRIVATE can_driver
 )
 
