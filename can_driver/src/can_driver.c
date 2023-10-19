@@ -29,7 +29,7 @@ static void set_irq_enabled( enum CANDRV_IRQ irq, bool enabled ) {
 
         val = ( true == enabled ) ? mask : (uint8_t)( ~mask );
 
-        mcp2515_modbits_register( REG_CANINTE_FLGS, mask, val );
+        mcp2515_modbits_register( REG_CANINTE, mask, val );
     }
 }
 
@@ -41,33 +41,33 @@ candrv_result_t candrv_init() {
 
     to_be_continued = ( to_be_continued && mcp2515_reset() ) ? true : false;
 
-    to_be_continued = ( to_be_continued && mcp2515_change_can_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_set_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) ? true : false;
 
     if ( to_be_continued ) {
 
         // Begin trial implements
-        mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_RXM, MASKOF_RXB0CTRL_RXM );
-        mcp2515_modbits_register( REG_RXB0CTRL_FLGS, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
+        mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_RXM, MASKOF_RXB0CTRL_RXM );
+        mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
         // End trial implements
 
         set_irq_enabled( CANDRV_IRQ_RX0_FULL, true );
         set_irq_enabled( CANDRV_IRQ_TX0_EMPTY, true );
     }
 
-    to_be_continued = ( to_be_continued && mcp2515_change_opr_mode( OPR_MODE_NORMAL ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_set_opr_mode( OPR_MODE_NORMAL ) ) ? true : false;
 
     return to_be_continued ? CANDRV_SUCCESS : CANDRV_FAILURE;
 }
 
 void candrv_tmp_clr_rx0( void ) {
 
-    mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_RX0IF, 0U );
+    mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINTF_RX0IF, 0U );
 }
 
 
 void candrv_tmp_clr_tx0( void ) {
 
-    mcp2515_modbits_register( REG_CANINTF_FLGS, MASKOF_CANINTF_TX0IF, 0U );
+    mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINTF_TX0IF, 0U );
 }
 
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg ) {
@@ -77,7 +77,7 @@ candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *c
 
 candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx ) {
 
-    return mcp2515_req_send_msg( tx_idx );
+    return mcp2515_set_send_req( tx_idx );
 }
 
 candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg ) {

@@ -59,6 +59,16 @@ enum CANDRV_IRQ {
     CANDRV_IRQ_NUMOF_ITEMS
 };
 
+enum CANDRV_TX_PRIORITY {
+    CANDRV_TX_PRIORITY_MINOF_IDX = 0,
+    CANDRV_TX_PRIORITY_LOW = CANDRV_TX_PRIORITY_MINOF_IDX,
+    CANDRV_TX_PRIORITY_MIDLOW,
+    CANDRV_TX_PRIORITY_MIDHIGH,
+    CANDRV_TX_PRIORITY_HIGH,
+    CANDRV_TX_PRIORITY_MAXOF_IDX = CANDRV_TX_PRIORITY_HIGH,
+    CANDRV_TX_PRIORITY_NUMOF_ITEMS
+};
+
 /*==================================================================*/
 /* Prototypes                                                       */
 /*==================================================================*/

@@ -41,9 +41,9 @@
     /*                1 = Pin is used as interrupt when valid message loaded into RXB0. */
     /*                0 = Digital Output mode.                                          */
 
-#define REG_TXRTSCTRL_FLGS  ( 0x0DU )
+#define REG_TXRTSCTRL       ( 0x0DU )
 #define REG_CANSTAT         ( 0x0EU )           /* CAN status.                      */
-#define REG_CANCTRL_FLGS    ( 0x0FU )           /* CAN control.                     */
+#define REG_CANCTRL         ( 0x0FU )           /* CAN control.                     */
 #define REG_RXF3SIDH        ( 0x10U )
 #define REG_RXF3SIDL        ( 0x11U )
 #define REG_RXF3EID8        ( 0x12U )
@@ -66,13 +66,13 @@
 #define REG_RXM1SIDL        ( 0x25U )
 #define REG_RXM1EID8        ( 0x26U )
 #define REG_RXM1EID0        ( 0x27U )
-#define REG_CNF3_FLGS       ( 0x28U )           /* CAN bus interface bit timing #3. */
-#define REG_CNF2_FLGS       ( 0x29U )           /* CAN bus interface bit timing #2. */
-#define REG_CNF1_FLGS       ( 0x2AU )           /* CAN bus interface bit timing #1. */
-#define REG_CANINTE_FLGS    ( 0x2BU )           /* CAN interrupt enables.           */
-#define REG_CANINTF_FLGS    ( 0x2CU )           /* CAN interrupt flags.             */
-#define REG_EFLG_FLGS       ( 0x2DU )
-#define REG_TXB0CTRL_FLGS   ( 0x30U )
+#define REG_CNF3            ( 0x28U )           /* CAN bus interface bit timing #3. */
+#define REG_CNF2            ( 0x29U )           /* CAN bus interface bit timing #2. */
+#define REG_CNF1            ( 0x2AU )           /* CAN bus interface bit timing #1. */
+#define REG_CANINTE         ( 0x2BU )           /* CAN interrupt enables.           */
+#define REG_CANINTF         ( 0x2CU )           /* CAN interrupt flags.             */
+#define REG_EFLG            ( 0x2DU )
+#define REG_TXB0CTRL        ( 0x30U )
 #define REG_TXB0SIDH        ( 0x31U )
 #define REG_TXB0SIDL        ( 0x32U )
 #define REG_TXB0EID8        ( 0x33U )
@@ -86,7 +86,7 @@
 #define REG_TXB0D5          ( 0x3BU )
 #define REG_TXB0D6          ( 0x3CU )
 #define REG_TXB0D7          ( 0x3DU )
-#define REG_TXB1CTRL_FLGS   ( 0x40U )
+#define REG_TXB1CTRL        ( 0x40U )
 #define REG_TXB1SIDH        ( 0x41U )
 #define REG_TXB1SIDL        ( 0x42U )
 #define REG_TXB1EID8        ( 0x43U )
@@ -100,7 +100,7 @@
 #define REG_TXB1D5          ( 0x4BU )
 #define REG_TXB1D6          ( 0x4CU )
 #define REG_TXB1D7          ( 0x4DU )
-#define REG_TXB2CTRL_FLGS   ( 0x50U )
+#define REG_TXB2CTRL        ( 0x50U )
 #define REG_TXB2SIDH        ( 0x51U )
 #define REG_TXB2SIDL        ( 0x52U )
 #define REG_TXB2EID8        ( 0x53U )
@@ -114,7 +114,7 @@
 #define REG_TXB2D5          ( 0x5BU )
 #define REG_TXB2D6          ( 0x5CU )
 #define REG_TXB2D7          ( 0x5DU )
-#define REG_RXB0CTRL_FLGS   ( 0x60U )
+#define REG_RXB0CTRL        ( 0x60U )
 #define REG_RXB0SIDH        ( 0x61U )
 #define REG_RXB0SIDL        ( 0x62U )
 #define REG_RXB0EID8        ( 0x63U )
@@ -128,7 +128,7 @@
 #define REG_RXB0D5          ( 0x6BU )
 #define REG_RXB0D6          ( 0x6CU )
 #define REG_RXB0D7          ( 0x6DU )
-#define REG_RXB1CTRL_FLGS   ( 0x70U )
+#define REG_RXB1CTRL        ( 0x70U )
 #define REG_RXB1SIDH        ( 0x71U )
 #define REG_RXB1SIDL        ( 0x72U )
 #define REG_RXB1EID8        ( 0x73U )
@@ -153,23 +153,14 @@
 #define MASKOF_CANCTRL_ABAT     ( 0x10U )                   /* Abort all TX.        */
 #define MASKOF_CANCTRL_OSM      ( 0x08U )                   /* One shot TX.         */
 
-#define MASKOF_CANINTE_MERRF    ( 0x80U )
-#define MASKOF_CANINTE_WAKIF    ( 0x40U )
-#define MASKOF_CANINTE_ERRIF    ( 0x20U )
-#define MASKOF_CANINTE_TX2IF    ( 0x10U )
-#define MASKOF_CANINTE_TX1IF    ( 0x08U )
-#define MASKOF_CANINTE_TX0IF    ( 0x04U )
-#define MASKOF_CANINTE_RX1IF    ( 0x02U )
-#define MASKOF_CANINTE_RX0IF    ( 0x01U )
-
-#define MASKOF_CANINTF_MERRF    MASKOF_CANINTE_MERRF
-#define MASKOF_CANINTF_WAKIF    MASKOF_CANINTE_WAKIF
-#define MASKOF_CANINTF_ERRIF    MASKOF_CANINTE_ERRIF
-#define MASKOF_CANINTF_TX2IF    MASKOF_CANINTE_TX2IF
-#define MASKOF_CANINTF_TX1IF    MASKOF_CANINTE_TX1IF
-#define MASKOF_CANINTF_TX0IF    MASKOF_CANINTE_TX0IF
-#define MASKOF_CANINTF_RX1IF    MASKOF_CANINTE_RX1IF
-#define MASKOF_CANINTF_RX0IF    MASKOF_CANINTE_RX0IF
+#define MASKOF_CANINT_MERRF     ( 0x80U )
+#define MASKOF_CANINT_WAKIF     ( 0x40U )
+#define MASKOF_CANINT_ERRIF     ( 0x20U )
+#define MASKOF_CANINT_TX2IF     ( 0x10U )
+#define MASKOF_CANINT_TX1IF     ( 0x08U )
+#define MASKOF_CANINT_TX0IF     ( 0x04U )
+#define MASKOF_CANINT_RX1IF     ( 0x02U )
+#define MASKOF_CANINT_RX0IF     ( 0x01U )
 
 #define MASKOF_EFLG_RX1OVR      ( 0x80U )
 #define MASKOF_EFLG_RX0OVR      ( 0x40U )
@@ -180,23 +171,11 @@
 #define MASKOF_EFLG_RXWAR       ( 0x02U )
 #define MASKOF_EFLG_EWARN       ( 0x01U )
 
-#define MASKOF_TXB0CTRL_ABTF    ( 0x40U )
-#define MASKOF_TXB0CTRL_MLOA    ( 0x20U )
-#define MASKOF_TXB0CTRL_TXERR   ( 0x10U )
-#define MASKOF_TXB0CTRL_TXREQ   ( 0x08U )
-#define MASKOF_TXB0CTRL_TXP     ( 0x03U )
-
-#define MASKOF_TXB1CTRL_ABTF    MASKOF_TXB0CTRL_ABTF
-#define MASKOF_TXB1CTRL_MLOA    MASKOF_TXB0CTRL_MLOA
-#define MASKOF_TXB1CTRL_TXERR   MASKOF_TXB0CTRL_TXERR
-#define MASKOF_TXB1CTRL_TXREQ   MASKOF_TXB0CTRL_TXREQ
-#define MASKOF_TXB1CTRL_TXP     MASKOF_TXB0CTRL_TXP
-
-#define MASKOF_TXB2CTRL_ABTF    MASKOF_TXB0CTRL_ABTF
-#define MASKOF_TXB2CTRL_MLOA    MASKOF_TXB0CTRL_MLOA
-#define MASKOF_TXB2CTRL_TXERR   MASKOF_TXB0CTRL_TXERR
-#define MASKOF_TXB2CTRL_TXREQ   MASKOF_TXB0CTRL_TXREQ
-#define MASKOF_TXB2CTRL_TXP     MASKOF_TXB0CTRL_TXP
+#define MASKOF_TXBCTRL_ABTF     ( 0x40U )
+#define MASKOF_TXBCTRL_MLOA     ( 0x20U )
+#define MASKOF_TXBCTRL_TXERR    ( 0x10U )
+#define MASKOF_TXBCTRL_TXREQ    ( 0x08U )
+#define MASKOF_TXBCTRL_TXP      ( 0x03U )
 
 #define MASKOF_RXB0CTRL_RXM     ( 0x60U )
 #define MASKOF_RXB0CTRL_RXRTR   ( 0x08U )

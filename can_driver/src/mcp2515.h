@@ -1,20 +1,11 @@
 #ifndef MCP2515_H
 #define MCP2515_H
 
-#ifndef CAN_DRIVER_H
 #include "can_driver.h"
-#endif
 
 /*==================================================================*/
 /* Macro definitions                                                */
 /*==================================================================*/
-
-/* MCP2515 TX send priority */
-#define TX_PRIORITY_LOW             ( 0x00U )
-#define TX_PRIORITY_MIDDLE_LOW      ( 0x01U )
-#define TX_PRIORITY_MIDDLE_HIGH     ( 0x02U )
-#define TX_PRIORITY_HIGH            ( 0x03U )
-
 
 /* MCP2515 operation modes. */
 #define OPR_MODE_NORMAL             ( 0x00U )           /* Normal mode.                     */
@@ -35,10 +26,8 @@
 /* Const definitions                                                */
 /*==================================================================*/
 
-
-
 enum MCP2515_CAN_BAUDRATE {
-    MCP2515_CAN_BAUDRATE_MINOF_IDX = 0U,
+    MCP2515_CAN_BAUDRATE_MINOF_IDX = 0,
     MCP2515_CAN_BAUDRATE_5KBPS = MCP2515_CAN_BAUDRATE_MINOF_IDX,
     MCP2515_CAN_BAUDRATE_10KBPS,
     MCP2515_CAN_BAUDRATE_20KBPS,
@@ -64,11 +53,11 @@ void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, c
 uint8_t mcp2515_get_opr_mode( void );
 candrv_result_t mcp2515_reset( void );
 uint8_t mcp2515_get_opr_mode( void );
-candrv_result_t mcp2515_change_opr_mode( const uint8_t mode );
-candrv_result_t mcp2515_change_can_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate );
+candrv_result_t mcp2515_set_opr_mode( const uint8_t mode );
+candrv_result_t mcp2515_set_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate );
 candrv_result_t mcp2515_change_tx_priority( const enum CANDRV_TX tx_idx, const uint8_t priority );
 candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg );
-candrv_result_t mcp2515_req_send_msg( const enum CANDRV_TX tx_idx );
-candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg );
+candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx );
+candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg, const enum CANDRV_TX_PRIORITY priority );
 
 #endif /* MCP2515_H */
