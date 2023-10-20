@@ -22,7 +22,7 @@
 #define MAXOF_ALARM_ID                  ( INT32_MAX )
 
 
-#define TIMEOUTOF_SEND                  ( 10U )
+#define TIMEOUTOF_SEND                  ( 1099U )
 
 
 /*==================================================================*/
@@ -43,14 +43,14 @@ static const uint8_t MASKOF_CANINT_TX_TBL[ CANDRV_TX_NUMOF_ITEMS ]
     = { MASKOF_CANINT_TX0IF, MASKOF_CANINT_TX1IF, MASKOF_CANINT_TX2IF };
 
 /* Index of the buffer corresponding to the CAN ID on the register. */
-static enum IDBUF {
+ enum IDBUF {
     IDBUF_MINOF_IDX = 0,
-    IDBUF_SIDH = CANDRV_TX_PRIORITY_MINOF_IDX,
+    IDBUF_SIDH = IDBUF_MINOF_IDX,
     IDBUF_SIDL,
     IDBUF_EID8,
     IDBUF_EID0,
     IDBUF_DLC,
-    IDBUF_MAXOF_IDX = CANDRV_TX_PRIORITY_HIGH,
+    IDBUF_MAXOF_IDX = IDBUF_DLC,
     IDBUF_NUMOF_ITEMS
 };
 
@@ -59,8 +59,8 @@ static enum IDBUF {
 /* Variables.                                                       */
 /*==================================================================*/
 
-static bool tx_available[CANDRV_TX_NUMOF_ITEMS] = {true, true, true};
-static alarm_id_t tx_timeout_alarm_id[CANDRV_TX_NUMOF_ITEMS] = {NULL, NULL, NULL};
+static bool is_tx_available[ CANDRV_TX_NUMOF_ITEMS ] = { true, true, true };
+static alarm_id_t tx_timeout_alarm_id[ CANDRV_TX_NUMOF_ITEMS ] = { NULL, NULL, NULL };
 
 
 /*==================================================================*/
@@ -162,13 +162,18 @@ static candrv_result_t wakeup( void ) {
 
 // ------------------------------------------------------------------------------------------------
 
+static bool is_invalid_msg_kind( const can_format_kind_t kind ) {
+    
+    return ( ( CAN_KIND_MINOF_IDX > kind ) || ( CAN_KIND_MAXOF_IDX < kind ) ) ? true : false;
+}
+
 candrv_result_t mcp2515_set_opr_mode( const uint8_t mode ) {
 
     const uint8_t current = mcp2515_get_opr_mode();
 
     /* Validate arguments. */
-    if ( ( OPR_MODE_NORMAL     == mode ) || ( OPR_MODE_SLEEP  == mode ) || ( OPR_MODE_LOOPBACK == mode )
-      || ( OPR_MODE_LISTENONLY == mode ) || ( OPR_MODE_CONFIG == mode ) )
+    if ( !( ( OPR_MODE_NORMAL     == mode ) || ( OPR_MODE_SLEEP  == mode ) || ( OPR_MODE_LOOPBACK == mode )
+         || ( OPR_MODE_LISTENONLY == mode ) || ( OPR_MODE_CONFIG == mode ) ) )
         return CANDRV_FAILURE;
 
     /* Do nothing if the operation mode does not change. */
@@ -205,7 +210,13 @@ candrv_result_t mcp2515_set_baudrate( const enum MCP2515_CAN_BAUDRATE baudrate )
         return CANDRV_FAILURE;
 
     /* Apply. */
-    mcp2515_write_register( REG_CNF3, BAUDRATE_TBL[ baudrate ] );
+    picocan_begin_spi_commands();
+
+    picocan_write_spi( SPICMD_WRITE_REG );
+    picocan_write_spi( REG_CNF3 );
+    picocan_write_array_spi( 3U, BAUDRATE_TBL[ baudrate ] );
+
+    picocan_end_spi_commands();
 
     return CANDRV_SUCCESS;
 }
@@ -239,11 +250,6 @@ static candrv_result_t build_can_id_reg(
     }
 
     return CANDRV_SUCCESS;
-}
-
-static bool is_invalid_msg_kind( const can_format_kind_t kind ) {
-    
-    return ( ( CAN_KIND_MINOF_IDX > kind ) || ( CAN_KIND_MAXOF_IDX < kind ) ) ? true : false;
 }
 
 static bool is_invalid_tx_priority( const enum CANDRV_TX_PRIORITY priority ) {
@@ -280,11 +286,11 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
         return CANDRV_FAILURE;
 
     /* Fails if not available. */
-    if ( true != tx_available[ tx_idx ] )
+    if ( true != is_tx_available[ tx_idx ] )
         return CANDRV_FAILURE;
 
     /* Fails if illegal CAN length. */
-    if ( MAXOF_CAN_LEN >= msg->length )
+    if ( MAXOF_CAN_LEN < msg->length )
         return CANDRV_FAILURE;
 
     /* Fails if illegal CAN content. */
@@ -297,7 +303,7 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
         return CANDRV_FAILURE;
 
     const uint8_t id_buf[ IDBUF_NUMOF_ITEMS ] 
-        = { id_reg.sidh, id_reg.sidl, id_reg.eid8, id_reg.eid0, msg->length };
+        = { id_reg.sidh, id_reg.sidl, id_reg.eid8, id_reg.eid0 };
 
     /* Write to the register. */
     if ( MINOF_CAN_LEN < msg->length ) {
@@ -323,27 +329,28 @@ void mcp2515_clr_send_req( const enum CANDRV_TX tx_idx ) {
 
     /* Validate arguments. */
     if ( is_invalid_tx_idx( tx_idx ) )
-        return CANDRV_FAILURE;
+        return;
 
     /* Clear send request. */
     mcp2515_modbits_register( REG_TXBCTRL_TBL[ tx_idx ], MASKOF_TXBCTRL_TXREQ, 0U );
 
     /* Disabled sent interruption. */
     mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_TX_TBL[ tx_idx ], 0U );
+    mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_TX_TBL[ tx_idx ], 0U );
 
     /* Cancel timeout alarm. */
     if ( !( is_invalid_tx_timeout_alarm_id( tx_timeout_alarm_id[ tx_idx ] ) ) ) {
 
         (void)cancel_alarm( tx_timeout_alarm_id[ tx_idx ] );
 
-        tx_timeout_alarm_id[ tx_idx ] = NULL;
+        tx_timeout_alarm_id[ tx_idx ] = (alarm_id_t)NULL;
     }
 
     /* TXn to be available. */
-    tx_available[ tx_idx ] = true;
+    is_tx_available[ tx_idx ] = true;
 }
 
-static int64_t cbk_send_timeout( const alarm_id_t id, const void const *user_data ) {
+static int64_t cbk_send_timeout( alarm_id_t id, void *user_data ) {
 
     if ( !( is_invalid_tx_timeout_alarm_id( id ) ) ) {
 
@@ -370,7 +377,7 @@ candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx ) {
         return CANDRV_FAILURE;
 
     /* Fails if not available. */
-    if ( true != tx_available[ tx_idx ] )
+    if ( true != is_tx_available[ tx_idx ] )
         return CANDRV_FAILURE;
 
     /* Set timeout alarm. */
@@ -381,7 +388,7 @@ candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx ) {
         return CANDRV_FAILURE;
 
     /* Requested send CAN message. */
-    tx_available[ tx_idx ] = false;
+    is_tx_available[ tx_idx ] = false;
 
     /* Enabled TX interruption. */
     mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_TX_TBL[ tx_idx ], 0xFFU );
@@ -461,4 +468,28 @@ candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *
                 : build_ext_can_id( id_buf[ IDBUF_EID0 ], id_buf[ IDBUF_EID8 ], id_buf[ IDBUF_SIDL ], id_buf[ IDBUF_SIDH ] );
 
     return CANDRV_SUCCESS;
+}
+
+void mcp2515_clr_all_send_req_if_err( void ) {
+
+    /* Get status of send request. */
+    picocan_begin_spi_commands();
+    picocan_write_spi( SPICMD_READ_STAT );
+    const uint8_t stat = picocan_read_spi();
+    picocan_end_spi_commands();
+
+    /* Clear send request of TX0 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x04U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB0CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_0 );
+
+    /* Clear send request of TX1 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x10U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB1CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_1 );
+
+    /* Clear send request of TX2 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x40U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB2CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_2 );
 }

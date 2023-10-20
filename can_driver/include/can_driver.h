@@ -1,13 +1,8 @@
 #ifndef CAN_DRIVER_H
 #define CAN_DRIVER_H
 
-#ifndef _PICO_STDLIB_H
 #include "pico/stdlib.h"
-#endif
-
-#ifndef CAN_H
 #include "can.h"
-#endif
 
 /*==================================================================*/
 /* Macro definitions                                                */
@@ -84,4 +79,5 @@ void candrv_tmp_clr_rx0( void );
 void candrv_tmp_clr_tx0( void );
 uint8_t candrv_tmp_get_irq_reason( void );
 
+void test( void );
 #endif  /* CAN_DRIVER_H */
