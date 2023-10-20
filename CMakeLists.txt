@@ -3,6 +3,8 @@ cmake_minimum_required( VERSION 3.12 )
 # Pull in SDK. ( must be before project )
 include( pico_sdk_import.cmake )
 
+set (CMAKE_BUILD_TYPE "Debug")
+
 project( can_trial
     VERSION 1.0.0
     DESCRIPTION "CAN communication trial"
