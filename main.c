@@ -9,9 +9,6 @@
 
 int main() {
 
-    busy_wait_us_32(3 * 1000 * 1000);
-
-
     uint8_t local_content[8] = { 0U };
     can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, local_content };
 
