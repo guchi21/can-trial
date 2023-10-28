@@ -8,8 +8,10 @@ project( can_driver
 
 add_library( can_driver STATIC
     ./src/mcp2515.c
+    ./src/mcp2515_recv.c
+    ./src/mcp2515_send.c
     ./src/can_driver.c
-    ./src/can_driver_irq.c
+    ./src/can_irq.c
 )
 
 target_compile_features( can_driver PRIVATE cxx_std_11 )

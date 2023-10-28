@@ -7,6 +7,7 @@
 /*==================================================================*/
 /* Macro definitions                                                */
 /*==================================================================*/
+
 #define CANDRV_FAILURE ( 0U )
 #define CANDRV_SUCCESS ( 1U )
 
@@ -14,9 +15,8 @@
 /*==================================================================*/
 /* Type definitions                                                 */
 /*==================================================================*/
-typedef bool candrv_result_t;
 
-typedef void (*can_irq_callback_t)( void );
+typedef bool candrv_result_t;
 
 
 /*==================================================================*/
@@ -69,15 +69,10 @@ enum CANDRV_TX_PRIORITY {
 /*==================================================================*/
 
 candrv_result_t candrv_init();
-candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx, const can_message_t *const msg );
-candrv_result_t candrv_req_send_msg( const enum CANDRV_TX tx_idx );
-candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_message_t *const msg );
-void candrv_set_irq_callback( const can_irq_callback_t callback );
-can_irq_callback_t candrv_get_irq_callback( void );
+candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg );
+candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
+    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority ) {
+candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx ) {
+candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
 
-void candrv_tmp_clr_rx0( void );
-void candrv_tmp_clr_tx0( void );
-uint8_t candrv_tmp_get_irq_reason( void );
-
-void test( void );
 #endif  /* CAN_DRIVER_H */

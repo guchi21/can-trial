@@ -1,6 +1,6 @@
 #include "can_driver_irq.h"
 #include "mcp2515.h"
-#include "mcp2515_reg_addr.h"
+#include "MCP2515_REGISTER.h"
 
 #define IRQ_REASON_MSGERR               ( 0U )
 #define IRQ_REASON_ERRSTAT              ( 1U )
