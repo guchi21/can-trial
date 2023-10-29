@@ -19,7 +19,7 @@ static void cbk_recv( const enum CANDRV_RX rx_idx ) {
 
     uint8_t i = cntof_rbuf;
 
-    candrv_result_t res = candrv_get_rx_msg( rx_idx, recvs[ i ] );
+    candrv_result_t res = candrv_get_rx_msg( rx_idx, &recvs[ i ] );
 
     if( CANDRV_SUCCESS == res )
         cntof_rbuf++;
@@ -27,7 +27,7 @@ static void cbk_recv( const enum CANDRV_RX rx_idx ) {
 
 int main() {
 
-    candrv_set_cbk_recv( cbk_recv );
+    candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk_recv );
 
     if( CANDRV_FAILURE == candrv_init() ) {
         while(1) 
@@ -58,8 +58,8 @@ int main() {
         uint32_t current = time_us_32();
 
         // メッセージ更新
-        can_message_t s;
-        s.id_kind = CAN_KIND_STD;
+        can_msg_t s;
+        s.id_kind = CANID_KIND_STD;
         s.id = 0x295;
         s.is_remote = false;
         s.dlc = 8;
@@ -73,13 +73,13 @@ int main() {
         s.data[7] = (uint8_t)((current >> 24) & 0xff);
 
         // 送信バッファにせっと
-        if( false == candrv_set_tx_msg( CANDRV_TX_0, &s ) ) {
+        if ( false == candrv_set_tx_msg( CANDRV_TX_0, &s, CANDRV_TX_PRIORITY_MIDLOW ) ) {
 
             printf("seterr.");
         }
 
         // 送信要求
-        if ( false == candrv_req_send_msg( CANDRV_TX_0 ) ) {
+        if ( false == candrv_set_send_req( CANDRV_TX_0 ) ) {
 
             printf("reqerr.");
         }
