@@ -5,11 +5,25 @@
 #include "hardware/timer.h"
 #include "hardware/sync.h"
 #include <stdio.h>
+#include <malloc.h>
 
 #define MAXOF_RBUF ( 4U )
 
 static uint8_t cntof_rbuf = 0U;
 static can_msg_t recvs[ MAXOF_RBUF ];
+
+
+uint32_t getTotalHeap(void) {
+   extern char __StackLimit, __bss_end__;
+   
+   return &__StackLimit  - &__bss_end__;
+}
+
+uint32_t getFreeHeap(void) {
+   struct mallinfo m = mallinfo();
+
+   return getTotalHeap() - m.uordblks;
+}
 
 void cbk( enum CANDRV_RX rx_idx ) {
 
@@ -26,12 +40,16 @@ void cbk( enum CANDRV_RX rx_idx ) {
 
 int main() {
 
+    printf("Free is %d", getFreeHeap() );
+
     candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk );
 
     if( CANDRV_FAILURE == candrv_init() ) {
         while(1) 
             printf("初期化エラー");
     }
+
+    uint8_t c = 1U;
 
     while ( true ) {
 
@@ -52,35 +70,45 @@ int main() {
             cntof_rbuf = 0U;
 
             restore_interrupts(irqs);
+
+            printf("Free is %d", getFreeHeap() );
         }
 
-        uint32_t current = time_us_32();
 
-        // メッセージ更新
-        can_msg_t s;
-        s.id_kind = CANID_KIND_STD;
-        s.id = 0x295;
-        s.is_remote = false;
-        s.dlc = 8;
-        s.data[0] = (uint8_t)(current & 0xff);
-        s.data[1] = (uint8_t)((current >> 8) & 0xff);
-        s.data[2] = (uint8_t)((current >> 16) & 0xff);
-        s.data[3] = (uint8_t)((current >> 24) & 0xff);
-        s.data[4] = (uint8_t)(current & 0xff);
-        s.data[5] = (uint8_t)((current >> 8) & 0xff);
-        s.data[6] = (uint8_t)((current >> 16) & 0xff);
-        s.data[7] = (uint8_t)((current >> 24) & 0xff);
+        if ( CANDRV_SUCCESS == candrv_is_tx_available( CANDRV_TX_0 ) ) {
 
-        // 送信バッファにせっと
-        if ( false == candrv_set_tx_msg( CANDRV_TX_0, &s, CANDRV_TX_PRIORITY_MIDLOW ) ) {
+            // メッセージ更新
+            uint32_t current = time_us_32();
+            can_msg_t s;
+            s.id_kind = CANID_KIND_STD;
+            s.id = 0x295 + c;
+            s.is_remote = false;
+            s.dlc = 8;
+            s.data[0] = 0xFFU;
+            s.data[1] = 0x00U;
+            s.data[2] = 0xA5U;
+            s.data[3] = 0xF7U;
+            s.data[4] = (uint8_t)(current & 0xff);
+            s.data[5] = (uint8_t)((current >> 8) & 0xff);
+            s.data[6] = (uint8_t)((current >> 16) & 0xff);
+            s.data[7] = (uint8_t)((current >> 24) & 0xff);
 
-            printf("seterr.");
-        }
+            if ( 0xFFU == c )
+                c = 0U;
+            
+            c++;
 
-        // 送信要求
-        if ( false == candrv_set_send_req( CANDRV_TX_0 ) ) {
+            // 送信バッファにせっと
+            if ( false == candrv_set_tx_msg( CANDRV_TX_0, &s, CANDRV_TX_PRIORITY_MIDLOW ) ) {
 
-            printf("reqerr.");
+                // printf("seterr.");
+            }
+
+            // 送信要求
+            if ( false == candrv_set_send_req( CANDRV_TX_0 ) ) {
+
+                // printf("reqerr.");
+            }
         }
     }
 }

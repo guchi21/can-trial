@@ -75,4 +75,6 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
 candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx );
 candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx );
 
+candrv_result_t candrv_is_tx_available( const enum CANDRV_TX tx_idx ); // todo:trial
+
 #endif  /* CAN_DRIVER_H */

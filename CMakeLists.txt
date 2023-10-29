@@ -25,5 +25,5 @@ target_link_libraries( can_trial
 target_compile_features( can_trial PRIVATE cxx_std_11 )
 
 pico_enable_stdio_usb( can_trial 1 )
-pico_enable_stdio_uart( can_trial 0 )
+pico_enable_stdio_uart( can_trial 1 )
 pico_add_extra_outputs( can_trial )

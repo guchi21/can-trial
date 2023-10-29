@@ -82,9 +82,11 @@ void candrv_ind_irq( void ) {
 
             cbk_recv( CANDRV_RX_0 );
         }
+        else {
 
-        /* Clear interruption by received to RX0. */
-        mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX0IF, 0U );
+            /* Clear interruption by received to RX0. */
+            mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX0IF, 0U );
+        }
 
         break;
 
@@ -94,9 +96,11 @@ void candrv_ind_irq( void ) {
 
             cbk_recv( CANDRV_RX_1 );
         }
+        else {
 
-        /* Clear interruption by received to RX1. */
-        mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX1IF, 0U );
+            /* Clear interruption by received to RX1. */
+            mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX1IF, 0U );
+        }
 
         break;
 

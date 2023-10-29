@@ -173,7 +173,7 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
     mcp2515_modbits_register(
         REG_TXBCTRL_TBL[ tx_idx ], MASKOF_TXBCTRL_TXP, (uint8_t)priority );
 
-    if ( ( false != msg->is_remote ) && ( CAN_EMPTY < msg->dlc ) ) {
+    if ( ( false == msg->is_remote ) && ( CAN_EMPTY < msg->dlc ) ) {
 
         picocan_begin_spi_commands();
         picocan_write_spi( TX_SPICMD_TBL[ tx_idx ][ IDXOF_TX_SPICMD_WRITE_BODY ]);
@@ -260,6 +260,20 @@ candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx ) {
     picocan_begin_spi_commands();
     picocan_write_spi( TX_SPICMD_TBL[ tx_idx ][ IDXOF_TX_SPICMD_SEND ] );
     picocan_end_spi_commands();
+
+    return CANDRV_SUCCESS;
+}
+
+ // todo:trial
+candrv_result_t mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ) {
+
+    /* Validate arguments. */
+    if ( is_invalid_tx_idx( tx_idx ) )
+        return CANDRV_FAILURE;
+
+    /* Fails if not available. */
+    if ( true != is_tx_available[ tx_idx ] )
+        return CANDRV_FAILURE;
 
     return CANDRV_SUCCESS;
 }

@@ -101,7 +101,7 @@ candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *cons
         msg->dlc = CAN_MAXOF_LEN;
 
     /* CAN data. */
-    if ( ( false != msg->is_remote ) && ( CAN_EMPTY < msg->dlc ) ) {
+    if ( ( false == msg->is_remote ) && ( CAN_EMPTY < msg->dlc ) ) {
 
         picocan_begin_spi_commands();
         picocan_write_spi( RX_SPICMD_TBL[ rx_idx ][ IDXOF_RX_SPICMD_READ_BODY ] );

@@ -55,3 +55,8 @@ candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
     return mcp2515_clr_send_req( tx_idx );
 }
 
+// todo:trial
+candrv_result_t candrv_is_tx_available( const enum CANDRV_TX tx_idx ) {
+
+    return mcp2515_is_tx_available( tx_idx );
+}

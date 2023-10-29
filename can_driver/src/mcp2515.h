@@ -62,5 +62,6 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
 candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx );
 
 void mcp2515_clr_all_send_req_if_err( void ); // todo:trial
+candrv_result_t mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ); // todo:trial
 
 #endif /* MCP2515_H */
