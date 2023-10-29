@@ -4,7 +4,7 @@
 #include "can.h"
 #include "can_driver.h"
 
-typedef void (*candrv_cbk_recv_t)( const enum CANDRV_RX rx_idx );
+typedef void (*candrv_cbk_recv_t)( enum CANDRV_RX rx_idx );
 
 /*==================================================================*/
 /* Prototypes                                                       */

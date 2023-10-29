@@ -52,10 +52,15 @@ enum MCP2515_OPMODE {
 uint8_t mcp2515_read_register( const uint8_t addr );
 void mcp2515_write_register( const uint8_t addr, const uint8_t val );
 void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, const uint8_t val );
-uint8_t mcp2515_get_opr_mode( void );
 candrv_result_t mcp2515_reset( void );
-uint8_t mcp2515_get_opr_mode( void );
 candrv_result_t mcp2515_set_opmode( const enum MCP2515_OPMODE mode );
 candrv_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate );
+candrv_result_t mcp2515_clr_send_req( const enum CANDRV_TX tx_idx );
+candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg );
+candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
+    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority );
+candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx );
+
+void mcp2515_clr_all_send_req_if_err( void ); // todo:trial
 
 #endif /* MCP2515_H */

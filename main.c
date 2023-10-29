@@ -1,18 +1,17 @@
+#include "can.h"
 #include "can_driver.h"
 #include "can_driver_irq.h"
-#include <stdio.h>
 #include "pico/stdlib.h"
 #include "hardware/timer.h"
 #include "hardware/sync.h"
-#include <limits.h>
-#include <string.h>
+#include <stdio.h>
 
 #define MAXOF_RBUF ( 4U )
 
 static uint8_t cntof_rbuf = 0U;
 static can_msg_t recvs[ MAXOF_RBUF ];
 
-static void cbk_recv( const enum CANDRV_RX rx_idx ) {
+void cbk( enum CANDRV_RX rx_idx ) {
 
     if ( MAXOF_RBUF <= cntof_rbuf )
         return;
@@ -27,7 +26,7 @@ static void cbk_recv( const enum CANDRV_RX rx_idx ) {
 
 int main() {
 
-    candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk_recv );
+    candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk );
 
     if( CANDRV_FAILURE == candrv_init() ) {
         while(1) 

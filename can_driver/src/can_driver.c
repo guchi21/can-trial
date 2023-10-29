@@ -18,23 +18,40 @@ candrv_result_t candrv_init() {
 
     to_be_continued = ( to_be_continued && mcp2515_reset() ) ? true : false;
 
-    to_be_continued = ( to_be_continued && mcp2515_set_baudrate( MCP2515_CAN_BAUDRATE_125KBPS ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_set_baudrate( MCP2515_BAUDRATE_125KBPS ) ) ? true : false;
 
     if ( to_be_continued ) {
 
         // Begin trial implements
         mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXBCTRL_RXM, MASKOF_RXBCTRL_RXM );
         mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
-        // End trial implements
 
-        set_irq_enabled( CANDRV_IRQ_ERR, true );
-        set_irq_enabled( CANDRV_IRQ_MSGERR, true );
-        set_irq_enabled( CANDRV_IRQ_RX0_FULL, true );
+        mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_MERRF | MASKOF_CANINT_ERRIF | MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
+        // End trial implements
     }
 
-    to_be_continued = ( to_be_continued && mcp2515_set_opr_mode( OPR_MODE_NORMAL ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_set_opmode( MCP2515_OPMODE_NORMAL ) ) ? true : false;
 
     return to_be_continued ? CANDRV_SUCCESS : CANDRV_FAILURE;
 }
 
+candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg ) {
+
+    return mcp2515_get_rx_msg( rx_idx, msg );
+}
+
+candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
+    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority ) {
+
+    return mcp2515_set_tx_msg( tx_idx, msg, priority );
+}
+
+candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx ) {
+
+    return mcp2515_set_send_req( tx_idx );
+}
+candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
+
+    return mcp2515_clr_send_req( tx_idx );
+}
 

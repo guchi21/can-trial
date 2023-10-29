@@ -71,8 +71,8 @@ enum CANDRV_TX_PRIORITY {
 candrv_result_t candrv_init();
 candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg );
 candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
-    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority ) {
-candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx ) {
-candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
+    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority );
+candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx );
+candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx );
 
 #endif  /* CAN_DRIVER_H */

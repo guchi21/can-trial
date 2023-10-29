@@ -11,9 +11,11 @@
 #define IRQ_REASON_RX0                  ( 6U )
 #define IRQ_REASON_RX1                  ( 7U )
 
-static candrv_cbk_recv_t *cbk_recv = NULL;
+static uint32_t countof_msgerr_irq = 0U;
+static uint32_t countof_errstat_irq = 0U;
+static candrv_cbk_recv_t cbk_recv = NULL;
 
-void candrv_set_cbk_recv( const candrv_cbk_recv_t *const cbk ) {
+void candrv_set_cbk_recv( candrv_cbk_recv_t cbk ) {
 
     cbk_recv = cbk;
 }

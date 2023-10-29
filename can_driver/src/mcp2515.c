@@ -184,3 +184,28 @@ candrv_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate ) {
 
     return CANDRV_SUCCESS;
 }
+
+// todo:trial
+void mcp2515_clr_all_send_req_if_err( void ) {
+
+    /* Get status of send request. */
+    picocan_begin_spi_commands();
+    picocan_write_spi( SPICMD_READ_STAT );
+    const uint8_t stat = picocan_read_spi();
+    picocan_end_spi_commands();
+
+    /* Clear send request of TX0 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x04U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB0CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_0 );
+
+    /* Clear send request of TX1 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x10U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB1CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_1 );
+
+    /* Clear send request of TX2 if occurrs an error. */
+    if ( ( 0U != ( stat & 0x40U ) )
+      && ( 0U != ( mcp2515_read_register( REG_TXB2CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
+        mcp2515_clr_send_req( CANDRV_TX_2 );
+}
