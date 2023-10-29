@@ -7,51 +7,70 @@
 #include <limits.h>
 #include <string.h>
 
+#define MAXOF_RBUF ( 4U )
+
+static uint8_t cntof_rbuf = 0U;
+static can_msg_t recvs[ MAXOF_RBUF ];
+
+static void cbk_recv( const enum CANDRV_RX rx_idx ) {
+
+    if ( MAXOF_RBUF <= cntof_rbuf )
+        return;
+
+    uint8_t i = cntof_rbuf;
+
+    candrv_result_t res = candrv_get_rx_msg( rx_idx, recvs[ i ] );
+
+    if( CANDRV_SUCCESS == res )
+        cntof_rbuf++;
+}
+
 int main() {
 
-    busy_wait_us_32(3 * 1000 * 1000);
-
-
-    uint8_t local_content[8] = { 0U };
-    can_message_t local_msg = { CAN_KIND_STD, 0U, 0U, local_content };
-
-    uint32_t rt = time_us_32();
-    uint32_t prert = rt;
-
+    candrv_set_cbk_recv( cbk_recv );
 
     if( CANDRV_FAILURE == candrv_init() ) {
         while(1) 
             printf("初期化エラー");
     }
 
-    test();
+    while ( true ) {
 
-    // そうしんめっせ作成
-    can_message_t s;
-    uint8_t content[8] = { 0xA1, 0xB2, 0xC3, 0xFF, 0x00, 0x45, 0xEA, 0x55 };
-    s.kind = CAN_KIND_STD;
-    s.id = 0x295;
-    s.length = 8;
-    s.content = content;
+        if ( 0U < cntof_rbuf ) {
 
-    while(1) {
+            uint32_t irqs = save_and_disable_interrupts();
 
-        can_message_t* m = candrv_get_recv_msg0();
-        rt = m->content[4] + ( m->content[5] << 8 ) + ( m->content[6] << 16 ) + ( m->content[7] << 24 );
-        printf( "Received message. [%#X] %#X %#X %#X %#X %#X %#X %#X %#X | %d \n", m->id,
-                m->content[0], m->content[1], m->content[2], m->content[3],
-                m->content[4], m->content[5], m->content[6], m->content[7], rt - prert );
-        prert = rt;
+            printf( "Received message...\n");
 
-        busy_wait_us_32(2 * 1000 * 1000);
+            for ( uint8_t i = 0U; cntof_rbuf > i; i++ ) {
+
+                can_msg_t* m = &recvs[ i ];
+                printf( "[%#X] %d %#X %#X %#X %#X %#X %#X %#X %#X\n", m->id, m->dlc,
+                    m->data[0], m->data[1], m->data[2], m->data[3],
+                    m->data[4], m->data[5], m->data[6], m->data[7] );
+            }
+
+            cntof_rbuf = 0U;
+
+            restore_interrupts(irqs);
+        }
 
         uint32_t current = time_us_32();
 
         // メッセージ更新
-        s.content[4] = (uint8_t)(current & 0xff);
-        s.content[5] = (uint8_t)((current >> 8) & 0xff);
-        s.content[6] = (uint8_t)((current >> 16) & 0xff);
-        s.content[7] = (uint8_t)((current >> 24) & 0xff);
+        can_message_t s;
+        s.id_kind = CAN_KIND_STD;
+        s.id = 0x295;
+        s.is_remote = false;
+        s.dlc = 8;
+        s.data[0] = (uint8_t)(current & 0xff);
+        s.data[1] = (uint8_t)((current >> 8) & 0xff);
+        s.data[2] = (uint8_t)((current >> 16) & 0xff);
+        s.data[3] = (uint8_t)((current >> 24) & 0xff);
+        s.data[4] = (uint8_t)(current & 0xff);
+        s.data[5] = (uint8_t)((current >> 8) & 0xff);
+        s.data[6] = (uint8_t)((current >> 16) & 0xff);
+        s.data[7] = (uint8_t)((current >> 24) & 0xff);
 
         // 送信バッファにせっと
         if( false == candrv_set_tx_msg( CANDRV_TX_0, &s ) ) {
@@ -64,7 +83,5 @@ int main() {
 
             printf("reqerr.");
         }
-
-        
     }
 }

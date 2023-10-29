@@ -1,6 +1,6 @@
 #include "can_driver_irq.h"
 #include "mcp2515.h"
-#include "MCP2515_REGISTER.h"
+#include "mcp2515_register.h"
 
 #define IRQ_REASON_MSGERR               ( 0U )
 #define IRQ_REASON_ERRSTAT              ( 1U )
@@ -11,20 +11,11 @@
 #define IRQ_REASON_RX0                  ( 6U )
 #define IRQ_REASON_RX1                  ( 7U )
 
-static uint8_t recv_content0[8] = { 0U };
-static can_message_t recv_msg0 = { CAN_KIND_STD, 0U, 0U, recv_content0 };
+static candrv_cbk_recv_t *cbk_recv = NULL;
 
-static uint8_t recv_content1[8] = { 0U };
-static can_message_t recv_msg1 = { CAN_KIND_STD, 0U, 0U, recv_content1 };
+void candrv_set_cbk_recv( const candrv_cbk_recv_t *const cbk ) {
 
-can_message_t* candrv_get_recv_msg0( void ) {
-
-    return &recv_msg0;
-}
-
-can_message_t* candrv_get_recv_msg1( void ) {
-
-    return &recv_msg1;
+    cbk_recv = cbk;
 }
 
 void candrv_ind_irq( void ) {
@@ -42,6 +33,8 @@ void candrv_ind_irq( void ) {
         mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_MERRF, 0U );
 
         // ToDo: Register errors.
+        countof_msgerr_irq++;
+
         break;
 
     case IRQ_REASON_ERRSTAT:
@@ -52,8 +45,9 @@ void candrv_ind_irq( void ) {
         /* Clear interruption by message error. */
         mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_ERRIF, 0U );
 
-
         // ToDo: Register errors.
+        countof_errstat_irq++;
+
         break;
 
     case IRQ_REASON_TX0:
@@ -82,7 +76,10 @@ void candrv_ind_irq( void ) {
 
     case IRQ_REASON_RX0:
 
-        mcp2515_get_rx_msg( CANDRV_RX_0, &recv_msg0 );
+        if ( NULL != cbk_recv ) {
+
+            cbk_recv( CANDRV_RX_0 );
+        }
 
         /* Clear interruption by received to RX0. */
         mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX0IF, 0U );
@@ -91,7 +88,10 @@ void candrv_ind_irq( void ) {
 
     case IRQ_REASON_RX1:
 
-        mcp2515_get_rx_msg( CANDRV_RX_1, &recv_msg1 );
+        if ( NULL != cbk_recv ) {
+
+            cbk_recv( CANDRV_RX_1 );
+        }
 
         /* Clear interruption by received to RX1. */
         mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_RX1IF, 0U );
