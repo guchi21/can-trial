@@ -30,7 +30,7 @@
 
 static void cbk_gpio_irq( uint gpio, uint32_t event_mask ) {
 
-    if ( ( GPIO_MCP2515_INT == gpio ) && ( (uint32_t)GPIO_IRQ_EDGE_FALL == event_mask ) ) {
+    if ( ( GPIO_MCP2515_INT == gpio ) && ( (uint32_t)GPIO_IRQ_LEVEL_LOW == event_mask ) ) {
 
         picocan_wrap_ind_irq();
     }
@@ -50,7 +50,7 @@ void picocan_init() {
     gpio_set_dir( GPIO_MCP2515_CS, GPIO_OUT );
     gpio_put( GPIO_MCP2515_CS, PIN_VOLTAGE_HIGH );
 
-    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT, (uint32_t)GPIO_IRQ_EDGE_FALL, true, cbk_gpio_irq );
+    gpio_set_irq_enabled_with_callback( GPIO_MCP2515_INT, (uint32_t)GPIO_IRQ_LEVEL_LOW, true, cbk_gpio_irq );
 }
 
 void picocan_begin_spi_commands() {

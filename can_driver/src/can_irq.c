@@ -43,6 +43,9 @@ void candrv_ind_irq( void ) {
 
         /* Clear causes. */
         mcp2515_clr_all_send_req_if_err();
+
+        /* Clear RX overflow. */
+        mcp2515_modbits_register( REG_EFLG, MASKOF_EFLG_RX0OVR | MASKOF_EFLG_RX1OVR, 0U );
         
         /* Clear interruption by message error. */
         mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_ERRIF, 0U );
