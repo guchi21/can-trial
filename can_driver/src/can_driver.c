@@ -24,7 +24,6 @@ candrv_result_t candrv_init() {
 
         // Begin trial implements
         mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXBCTRL_RXM, MASKOF_RXBCTRL_RXM );
-        // mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
 
         mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_MERRF | MASKOF_CANINT_ERRIF | MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
         // End trial implements
