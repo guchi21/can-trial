@@ -264,16 +264,15 @@ candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx ) {
     return CANDRV_SUCCESS;
 }
 
- // todo:trial
-candrv_result_t mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ) {
+bool mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ) {
 
     /* Validate arguments. */
     if ( is_invalid_tx_idx( tx_idx ) )
-        return CANDRV_FAILURE;
+        return false;
 
     /* Fails if not available. */
     if ( true != is_tx_available[ tx_idx ] )
-        return CANDRV_FAILURE;
+        return false;
 
-    return CANDRV_SUCCESS;
+    return true;
 }

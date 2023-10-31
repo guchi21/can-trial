@@ -65,6 +65,6 @@ uint8_t mcp2515_get_numof_tx_err( void );
 uint8_t mcp2515_get_numof_rx_err( void );
 
 void mcp2515_clr_all_send_req_if_err( void ); // todo:trial
-candrv_result_t mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ); // todo:trial
+bool mcp2515_is_tx_available( const enum CANDRV_TX tx_idx );
 
 #endif /* MCP2515_H */

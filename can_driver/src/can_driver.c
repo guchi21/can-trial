@@ -68,7 +68,7 @@ enum CANDRV_TX candrv_get_available_tx( void ) {
 
     for ( enum CANDRV_TX i = CANDRV_TX_MINOF_IDX; CANDRV_TX_NUMOF_ITEMS > i; i++ ) {
 
-        if ( CANDRV_SUCCESS ==  mcp2515_is_tx_available( i ) )
+        if ( true ==  mcp2515_is_tx_available( i ) )
             return i;
     }
 
