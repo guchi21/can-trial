@@ -29,7 +29,8 @@ enum CANDRV_TX {
     CANDRV_TX_1,
     CANDRV_TX_2,
     CANDRV_TX_MAXOF_IDX = CANDRV_TX_2,
-    CANDRV_TX_NUMOF_ITEMS
+    CANDRV_TX_NUMOF_ITEMS,
+    CANDRV_TX_INVALID = 0xFFU
 };
 
 enum CANDRV_RX {
@@ -75,6 +76,8 @@ candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
 candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx );
 candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx );
 
-candrv_result_t candrv_is_tx_available( const enum CANDRV_TX tx_idx ); // todo:trial
+uint8_t candrv_get_numof_tx_err( void );
+uint8_t candrv_get_numof_rx_err( void );
+enum CANDRV_TX candrv_get_available_tx( void );
 
 #endif  /* CAN_DRIVER_H */

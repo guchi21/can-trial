@@ -61,6 +61,9 @@ candrv_result_t mcp2515_set_tx_msg( const enum CANDRV_TX tx_idx,
     const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority );
 candrv_result_t mcp2515_set_send_req( const enum CANDRV_TX tx_idx );
 
+uint8_t mcp2515_get_numof_tx_err( void );
+uint8_t mcp2515_get_numof_rx_err( void );
+
 void mcp2515_clr_all_send_req_if_err( void ); // todo:trial
 candrv_result_t mcp2515_is_tx_available( const enum CANDRV_TX tx_idx ); // todo:trial
 

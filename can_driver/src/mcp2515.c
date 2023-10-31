@@ -185,6 +185,16 @@ candrv_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate ) {
     return CANDRV_SUCCESS;
 }
 
+uint8_t mcp2515_get_numof_tx_err( void ) {
+
+    return mcp2515_read_register( REG_TEC );
+}
+uint8_t mcp2515_get_numof_rx_err( void ) {
+
+    return mcp2515_read_register( REG_REC );
+}
+
+
 // todo:trial
 void mcp2515_clr_all_send_req_if_err( void ) {
 

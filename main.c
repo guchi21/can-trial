@@ -7,11 +7,19 @@
 #include <stdio.h>
 #include <malloc.h>
 
-#define MAXOF_RBUF ( 4U )
+#define MAXOF_RBUF ( 100U )
 
 static uint8_t cntof_rbuf = 0U;
 static can_msg_t recvs[ MAXOF_RBUF ];
+static uint8_t cntof_print = 0U;
+static uint32_t print[ MAXOF_RBUF ];
 
+
+static uint32_t countof_recv = 0U;
+static uint32_t countof_sent = 0U;
+static uint32_t countof_ovf = 0U;
+static can_msg_t recv_msg;
+static bool is_busoff = false;
 
 uint32_t getTotalHeap(void) {
    extern char __StackLimit, __bss_end__;
@@ -25,90 +33,99 @@ uint32_t getFreeHeap(void) {
    return getTotalHeap() - m.uordblks;
 }
 
-void cbk( enum CANDRV_RX rx_idx ) {
+bool cbk_print_stat( repeating_timer_t *rt ) {
 
-    if ( MAXOF_RBUF <= cntof_rbuf )
-        return;
+    printf( "recv: %d, sent: %d, overflow: %d, tx_err: %d, rx_err: %d\n",
+        countof_recv, countof_sent, countof_ovf, candrv_get_numof_tx_err(), candrv_get_numof_rx_err() );
 
-    uint8_t i = cntof_rbuf;
+    countof_recv = 0U;
+    countof_sent = 0U;
+    countof_ovf = 0U;
 
-    candrv_result_t res = candrv_get_rx_msg( rx_idx, &recvs[ i ] );
+    return ( true );
+}
 
-    if( CANDRV_SUCCESS == res )
-        cntof_rbuf++;
+void cbk_recv( enum CANDRV_RX rx_idx ) {
+
+    if( CANDRV_SUCCESS == candrv_get_rx_msg( rx_idx, &recv_msg ) )
+        countof_recv++;
+}
+
+void cbk_sent( enum CANDRV_TX tx_idx ) {
+
+    countof_sent++;
+}
+
+void cbk_rbuf_ovf( enum CANDRV_RX rx_idx ) {
+
+    countof_ovf++;
+}
+
+void cbk_busoff( bool occured ) {
+
+    is_busoff = occured;
 }
 
 int main() {
 
-    printf("Free is %d", getFreeHeap() );
+    (void)stdio_init_all();
 
-    candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk );
+    printf("Total is %d, Free is %d\n", getTotalHeap(), getFreeHeap() );
+
+    candrv_set_cbk_recv( (candrv_cbk_recv_t)cbk_recv );
+    candrv_set_cbk_sent( (candrv_cbk_sent_t)cbk_sent );
+    candrv_set_cbk_rbuf_ovf( (candrv_cbk_rbuf_ovf_t)cbk_rbuf_ovf );
+    candrv_set_cbk_busoff( (candrv_cbk_busoff_t)cbk_busoff );
 
     if( CANDRV_FAILURE == candrv_init() ) {
         while(1) 
             printf("初期化エラー");
     }
 
-    uint8_t c = 1U;
+    static repeating_timer_t timer;
+
+    add_repeating_timer_ms( -1000, &cbk_print_stat, NULL, &timer );
+
 
     while ( true ) {
 
-        if ( 0U < cntof_rbuf ) {
+        // sleep_us(2000);
+        if ( !is_busoff ) {
 
-            uint32_t irqs = save_and_disable_interrupts();
+            enum CANDRV_TX tx_idx = candrv_get_available_tx();
 
-            printf( "Received message...\n");
+            if ( CANDRV_TX_INVALID != tx_idx ) {
 
-            for ( uint8_t i = 0U; cntof_rbuf > i; i++ ) {
+                // メッセージ更新
+                uint32_t current = time_us_32();
+                can_msg_t s;
+                s.id_kind = CANID_KIND_STD;
+                s.id = 0x295;
+                s.is_remote = false;
+                s.dlc = 8;
+                s.data[0] = 0xFFU;
+                s.data[1] = 0x00U;
+                s.data[2] = 0xA5U;
+                s.data[3] = 0xF7U;
+                s.data[4] = (uint8_t)((current >> 24) & 0xff);
+                s.data[5] = (uint8_t)((current >> 16) & 0xff);
+                s.data[6] = (uint8_t)((current >> 8) & 0xff);
+                s.data[7] = (uint8_t)(current & 0xff);
 
-                can_msg_t* m = &recvs[ i ];
-                printf( "[%#X] %d %#X %#X %#X %#X %#X %#X %#X %#X\n", m->id, m->dlc,
-                    m->data[0], m->data[1], m->data[2], m->data[3],
-                    m->data[4], m->data[5], m->data[6], m->data[7] );
+                // 送信バッファにせっと
+                if ( false == candrv_set_tx_msg( tx_idx, &s, CANDRV_TX_PRIORITY_MIDLOW ) ) {
+
+                    printf("seterr.");
+                }
+
+                // 送信要求
+                if ( false == candrv_set_send_req( tx_idx ) ) {
+
+                    printf("reqerr.");
+                }
             }
-
-            cntof_rbuf = 0U;
-
-            restore_interrupts(irqs);
-
-            printf("Free is %d", getFreeHeap() );
-        }
-
-
-        if ( CANDRV_SUCCESS == candrv_is_tx_available( CANDRV_TX_0 ) ) {
-
-            // メッセージ更新
-            uint32_t current = time_us_32();
-            can_msg_t s;
-            s.id_kind = CANID_KIND_STD;
-            s.id = 0x295 + c;
-            s.is_remote = false;
-            s.dlc = 8;
-            s.data[0] = 0xFFU;
-            s.data[1] = 0x00U;
-            s.data[2] = 0xA5U;
-            s.data[3] = 0xF7U;
-            s.data[4] = (uint8_t)(current & 0xff);
-            s.data[5] = (uint8_t)((current >> 8) & 0xff);
-            s.data[6] = (uint8_t)((current >> 16) & 0xff);
-            s.data[7] = (uint8_t)((current >> 24) & 0xff);
-
-            if ( 0xFFU == c )
-                c = 0U;
-            
-            c++;
-
-            // 送信バッファにせっと
-            if ( false == candrv_set_tx_msg( CANDRV_TX_0, &s, CANDRV_TX_PRIORITY_MIDLOW ) ) {
-
-                // printf("seterr.");
-            }
-
-            // 送信要求
-            if ( false == candrv_set_send_req( CANDRV_TX_0 ) ) {
-
-                // printf("reqerr.");
-            }
+        } else {
+            printf("おやすみ\n");
         }
     }
 }

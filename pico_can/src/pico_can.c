@@ -38,8 +38,6 @@ static void cbk_gpio_irq( uint gpio, uint32_t event_mask ) {
 
 void picocan_init() {
 
-    (void)stdio_init_all();
-
     spi_init( spi0, SPI_BAUDRATE );
 
     gpio_set_function( GPIO_MCP2515_MISO, GPIO_FUNC_SPI );

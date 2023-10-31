@@ -74,6 +74,7 @@ static bool is_invalid_rx_idx( const enum CANDRV_RX rx_idx ) {
 candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg ) {
 
     uint8_t hdr[ MCP2515_CANHDR_NUMOF_ITEMS ] = { 0U };
+    const uint8_t maskof_irq = ( CANDRV_RX_0 == rx_idx ) ? MASKOF_CANINT_RX0IF : MASKOF_CANINT_RX1IF;
 
     /* Fails if illegal arguments. */
     if ( is_invalid_rx_idx( rx_idx ) || ( NULL == msg ) )
@@ -108,6 +109,9 @@ candrv_result_t mcp2515_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *cons
         picocan_read_array_spi( CAN_MAXOF_LEN, msg->data );
         picocan_end_spi_commands();
     }
+
+    /* Clear interruption by received. */
+    mcp2515_modbits_register( REG_CANINTF, maskof_irq, 0U );
 
     return CANDRV_SUCCESS;
 }

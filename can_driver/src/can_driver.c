@@ -18,13 +18,13 @@ candrv_result_t candrv_init() {
 
     to_be_continued = ( to_be_continued && mcp2515_reset() ) ? true : false;
 
-    to_be_continued = ( to_be_continued && mcp2515_set_baudrate( MCP2515_BAUDRATE_125KBPS ) ) ? true : false;
+    to_be_continued = ( to_be_continued && mcp2515_set_baudrate( MCP2515_BAUDRATE_1000KBPS ) ) ? true : false;
 
     if ( to_be_continued ) {
 
         // Begin trial implements
         mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXBCTRL_RXM, MASKOF_RXBCTRL_RXM );
-        mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
+        // mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXB0CTRL_BUKT, (uint8_t)( ~MASKOF_RXB0CTRL_BUKT ) );
 
         mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_MERRF | MASKOF_CANINT_ERRIF | MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
         // End trial implements
@@ -55,8 +55,22 @@ candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
     return mcp2515_clr_send_req( tx_idx );
 }
 
-// todo:trial
-candrv_result_t candrv_is_tx_available( const enum CANDRV_TX tx_idx ) {
+uint8_t candrv_get_numof_tx_err( void ) {
 
-    return mcp2515_is_tx_available( tx_idx );
+    return mcp2515_get_numof_tx_err();
+}
+uint8_t candrv_get_numof_rx_err( void ) {
+
+    return mcp2515_get_numof_rx_err();
+}
+
+enum CANDRV_TX candrv_get_available_tx( void ) {
+
+    for ( enum CANDRV_TX i = CANDRV_TX_MINOF_IDX; CANDRV_TX_NUMOF_ITEMS > i; i++ ) {
+
+        if ( CANDRV_SUCCESS ==  mcp2515_is_tx_available( i ) )
+            return i;
+    }
+
+    return CANDRV_TX_INVALID;
 }
