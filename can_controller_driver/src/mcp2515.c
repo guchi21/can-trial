@@ -1,48 +1,40 @@
 #include "mcp2515.h"
 #include "mcp2515_register.h"
 #include "mcp2515_spicmd.h"
-#include "pico_can.h"
+#include "hardware_manager.h"
 #include "hardware/timer.h"
 
-/*==================================================================*/
-/* Macro definitions                                                */
-/*==================================================================*/
-
-#define OPMODE_NORMAL                   ( 0x00U )               /* Normal mode.         */
-#define OPMODE_SLEEP                    ( 0x20U )               /* Sleep mode.          */
-#define OPMODE_LOOPBACK                 ( 0x40U )               /* Loop back mode.      */
-#define OPMODE_LISTENONLY               ( 0x60U )               /* Listen only mode.    */
-#define OPMODE_CONFIG                   ( 0x80U )               /* Config mode.         */
-
-#define BAUDRATE_NUMOF_ITEMS            ( 3 )                   /* Number of CAN baudrate configuration items. */
-
-/*==================================================================*/
-/* Type definitions                                                 */
-/*==================================================================*/
+/* MCP2515 operation modes. */
 
 
-/*==================================================================*/
-/* Const definitions                                                */
-/*==================================================================*/
+/*! 
+ * \defgroup Mcp2515OpMode MCP2515 operation mode
+ */
+/*! \{ */
+#define OPMODE_NORMAL       ( 0x00U )   /*!< Normal mode          */
+#define OPMODE_SLEEP        ( 0x20U )   /*!< Sleep mode           */
+#define OPMODE_LOOPBACK     ( 0x40U )   /*!< Loop back mode       */
+#define OPMODE_LISTENONLY   ( 0x60U )   /*!< Listen only mode     */
+#define OPMODE_CONFIG       ( 0x80U )   /*!< Config mode.         */
+/*! \} */
+
+/*!
+ * @brief Time out of change operation mode.
+ */
+#define TIMEOUTOF_OPMODE_CHANGE   ( 1000000UL )       /*!< 1,000,000 us */
+
+/*!
+ * @brief Register item number of the CAN network budrate.
+ */
+#define BAUDRATE_NUMOF_ITEMS    ( 3 )   /* 3 items that CNF1, CNF2 and CNF3 */
 
 static const uint8_t OPMODE_TBL[ MCP2515_OPMODE_NUMOF_ITEMS ]
     = { OPMODE_NORMAL, OPMODE_SLEEP, OPMODE_LOOPBACK, OPMODE_LISTENONLY, OPMODE_CONFIG };
-
 
 static const uint8_t BAUDRATE_TBL[ MCP2515_BAUDRATE_NUMOF_ITEMS ][ BAUDRATE_NUMOF_ITEMS ] = {
     { 0xA7U, 0XBFU, 0x07U }, { 0x31U, 0XA4U, 0X04U }, { 0x18U, 0XA4U, 0x04U }, { 0x09U, 0XA4U, 0x04U }, { 0x04U, 0x9EU, 0x03U },
     { 0x03U, 0x9EU, 0x03U }, { 0x01U, 0x1EU, 0x03U }, { 0x00U, 0x9EU, 0x03U }, { 0x00U, 0x92U, 0x02U }, { 0x00U, 0x82U, 0x02U }
 };
-
-
-/*==================================================================*/
-/* Variables.                                                       */
-/*==================================================================*/
-
-
-/*==================================================================*/
-/* Implements.                                                      */
-/*==================================================================*/
 
 uint8_t mcp2515_read_register( const uint8_t addr ) {
 
@@ -81,31 +73,31 @@ void mcp2515_modbits_register( const uint8_t addr, const uint8_t maskof_write, c
     picocan_end_spi_commands();
 }
 
-static uint8_t mcp2515_get_opr_mode( void ) {
+static uint8_t mcp2515_get_opmode( void ) {
 
     return (uint8_t)( mcp2515_read_register( REG_CANSTAT ) & MASKOF_OPMOD );
 }
 
-static candrv_result_t wait_until_change_opmode( const uint8_t exp_mode ) {
+static cd_result_t wait_until_change_opmode( const uint8_t exp_mode ) {
 
     const uint32_t begun = time_us_32();
-    uint8_t opr_mode = OPMODE_INVALID;
+    uint8_t opr_mode = (uint8_t)( ~exp_mode );
 
     do {
-        opr_mode = mcp2515_get_opr_mode();
+        opr_mode = mcp2515_get_opmode();
 
         const uint32_t current = time_us_32();
         const uint32_t elapsed = ( current < begun ) ? ( UINT32_MAX - begun + current + 1UL ) : ( current - begun );
 
         if ( elapsed > TIMEOUTOF_OPMODE_CHANGE )
-            return CANDRV_FAILURE;
+            return CD_FAILURE;
 
     } while ( exp_mode != opr_mode );
 
-    return CANDRV_SUCCESS;
+    return CD_SUCCESS;
 }
 
-candrv_result_t mcp2515_reset( void ) {
+cd_result_t mcp2515_reset( void ) {
 
     picocan_begin_spi_commands();
     picocan_write_spi( SPICMD_RESET );
@@ -114,7 +106,7 @@ candrv_result_t mcp2515_reset( void ) {
     return wait_until_change_opmode( OPMODE_CONFIG );
 }
 
-static candrv_result_t wakeup( void ) {
+static cd_result_t wakeup( void ) {
 
     const bool allow_wake = ( 0U != ( mcp2515_read_register( REG_CANINTE ) & MASKOF_CANINT_WAKIF ) ) ? true : false;
 
@@ -126,8 +118,8 @@ static candrv_result_t wakeup( void ) {
     mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_WAKIF, 0xFFU );
 
     /* Temporarily switch to listen-only mode. */
-    if ( CANDRV_FAILURE == mcp2515_set_opmode( OPMODE_LISTENONLY ) )
-        return CANDRV_FAILURE;
+    if ( CD_FAILURE == mcp2515_set_opmode( OPMODE_LISTENONLY ) )
+        return CD_FAILURE;
 
     /* Restore interrupt of wake up. */
     if ( false == allow_wake )
@@ -137,22 +129,22 @@ static candrv_result_t wakeup( void ) {
     mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_WAKIF, 0U );
 }
 
-candrv_result_t mcp2515_set_opmode( const enum MCP2515_OPMODE mode ) {
+cd_result_t mcp2515_set_opmode( const enum MCP2515_OPMODE mode ) {
 
     /* Fails if illegal arguments. */
     if( ( MCP2515_OPMODE_MINOF_IDX > mode ) || ( MCP2515_OPMODE_MAXOF_IDX < mode ) )
-        return CANDRV_FAILURE;
+        return CD_FAILURE;
 
     const uint8_t next = OPMODE_TBL[ mode ];
-    const uint8_t current = mcp2515_get_opr_mode();
+    const uint8_t current = mcp2515_get_opmode();
 
     /* Do nothing if the operation mode does not change. */
     if ( current == next )
-        return CANDRV_SUCCESS;
+        return CD_SUCCESS;
 
     /* Wake up if current mode is sleep. */
-    if ( ( OPMODE_SLEEP == current ) && ( CANDRV_FAILURE == wakeup() ) )
-        return CANDRV_FAILURE;
+    if ( ( OPMODE_SLEEP == current ) && ( CD_FAILURE == wakeup() ) )
+        return CD_FAILURE;
 
     /* Clear waked up interruption if to be sleep. */
     if ( OPMODE_SLEEP == next )
@@ -165,15 +157,15 @@ candrv_result_t mcp2515_set_opmode( const enum MCP2515_OPMODE mode ) {
     return wait_until_change_opmode( next );
 }
 
-candrv_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate ) {
+cd_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate ) {
 
     /* Validate arguments. */
     if ( ( MCP2515_BAUDRATE_MINOF_IDX > baudrate ) || ( MCP2515_BAUDRATE_MAXOF_IDX < baudrate ) )
-        return CANDRV_FAILURE;
+        return CD_FAILURE;
 
     /* Fails if operation mode is not config mode. */
-    if ( OPMODE_CONFIG != mcp2515_get_opr_mode() )
-        return CANDRV_FAILURE;
+    if ( OPMODE_CONFIG != mcp2515_get_opmode() )
+        return CD_FAILURE;
 
     /* Apply. */
     picocan_begin_spi_commands();
@@ -182,7 +174,7 @@ candrv_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate ) {
     picocan_write_array_spi( BAUDRATE_NUMOF_ITEMS, BAUDRATE_TBL[ baudrate ] );
     picocan_end_spi_commands();
 
-    return CANDRV_SUCCESS;
+    return CD_SUCCESS;
 }
 
 uint8_t mcp2515_get_numof_tx_err( void ) {
@@ -196,7 +188,7 @@ uint8_t mcp2515_get_numof_rx_err( void ) {
 
 
 // todo:trial
-void mcp2515_clr_all_send_req_if_err( void ) {
+void mcp2515_clear_all_send_req_if_error( void ) {
 
     /* Get status of send request. */
     picocan_begin_spi_commands();
@@ -207,15 +199,40 @@ void mcp2515_clr_all_send_req_if_err( void ) {
     /* Clear send request of TX0 if occurrs an error. */
     if ( ( 0U != ( stat & 0x04U ) )
       && ( 0U != ( mcp2515_read_register( REG_TXB0CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
-        mcp2515_clr_send_req( CANDRV_TX_0 );
+        mcp2515_clr_send_req( CD_TX_0 );
 
     /* Clear send request of TX1 if occurrs an error. */
     if ( ( 0U != ( stat & 0x10U ) )
       && ( 0U != ( mcp2515_read_register( REG_TXB1CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
-        mcp2515_clr_send_req( CANDRV_TX_1 );
+        mcp2515_clr_send_req( CD_TX_1 );
 
     /* Clear send request of TX2 if occurrs an error. */
     if ( ( 0U != ( stat & 0x40U ) )
       && ( 0U != ( mcp2515_read_register( REG_TXB2CTRL ) & MASKOF_TXBCTRL_TXERR ) ) )
-        mcp2515_clr_send_req( CANDRV_TX_2 );
+        mcp2515_clr_send_req( CD_TX_2 );
+}
+
+cd_result_t cd_init( void ) {
+
+    bool to_be_continued = true;
+
+    hw_init();
+
+    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_reset() );
+
+    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_set_baudrate( MCP2515_BAUDRATE_1000KBPS ) );
+
+    if ( to_be_continued ) {
+
+        /* Receive all message */
+        mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXBCTRL_RXM, 0U );
+
+        /* Allow interruptions */
+        mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_MERRF | MASKOF_CANINT_ERRIF | 
+            MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
+    }
+
+    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_set_opmode( MCP2515_OPMODE_NORMAL ) );
+
+    return to_be_continued ? CD_SUCCESS : CD_FAILURE;
 }

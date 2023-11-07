@@ -23,11 +23,11 @@
   },
   "cmake.generator": "Ninja",
   "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+  "cortex-debug.variableUseNaturalFormat": true,
   "files.associations": {
-    "array": "c",
-    "string": "c",
-    "string_view": "c",
-    "ranges": "c"
-  },
-  "cortex-debug.variableUseNaturalFormat": true
+    "stdlib.h": "c",
+    "sync.h": "c",
+    "can_driver.h": "c",
+    "hardware_manager.h": "c",
+  }
 }

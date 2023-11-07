@@ -1,13 +1,24 @@
+/*
+ * (c) 2023 guchi21.
+ *
+ * SPDX-License-Identifier: BSD-2-Clause
+ */
+
 #ifndef MCP2515_REGISTER_H
 #define MCP2515_REGISTER_H
 
-/*==================================================================*/
-/* Define.                                                          */
-/*==================================================================*/
+/*!
+ * \file mcp2515_register.h
+ * \brief Definitions related the MCP2515 register.
+ *
+ * \author guchi21
+ * \date 2023-11-06
+ */
 
-/*--------------------------------------*/
-/* MCP2515 register address.            */
-/*--------------------------------------*/
+/*! 
+ * \defgroup Mcp2515RegAddr MCP2515 register address
+ */
+/*! \{ */
 #define REG_RXF0SIDH                    ( 0x00U )
 #define REG_RXF0SIDL                    ( 0x01U )
 #define REG_RXF0EID8                    ( 0x02U )
@@ -20,29 +31,35 @@
 #define REG_RXF2SIDL                    ( 0x09U )
 #define REG_RXF2EID8                    ( 0x0AU )
 #define REG_RXF2EID0                    ( 0x0BU )
-#define REG_BFPCTRL_FLGS                ( 0x0CU )               /* RXnBF PIN CONTROL AND STATUS. */
-    /* bit 7 : reserved */
-    /* bit 6 : reserved */
-    /* bit 5 : B1BFS: RX1BF Pin State bit (Digital Output mode only).                   */
-    /*                Reads as ‘0’ when RX1BF is configured as interrupt pin.            */
-    /* bit 4 : B0BFS: RX0BF Pin State bit (Digital Output mode only).                   */
-    /*                Reads as ‘0’ when RX0BF is configured as interrupt pin.            */
-    /* bit 3 : B1BFE: RX1BF Pin Function Enable bit.                                    */
-    /*                1 = Pin function enabled, operation mode determined by B1BFM bit. */
-    /*                0 = Pin function disabled, pin goes to high-impedance state.      */
-    /* bit 2 : B0BFE: RX0BF Pin Function Enable bit.                                    */
-    /*                1 = Pin function enabled, operation mode determined by B0BFM bit. */
-    /*                0 = Pin function disabled, pin goes to high-impedance state.      */
-    /* bit 1 : B1BFM: RX1BF Pin Operation Mode bit.                                     */
-    /*                1 = Pin is used as interrupt when valid message loaded into RXB1. */
-    /*                0 = Digital Output mode.                                          */
-    /* bit 0 : B0BFM: RX0BF Pin Operation Mode bit.                                     */
-    /*                1 = Pin is used as interrupt when valid message loaded into RXB0. */
-    /*                0 = Digital Output mode.                                          */
+
+/*!
+ * @brief BFPCTRL
+ *
+ * bit 7 : reserved
+ * bit 6 : reserved
+ * bit 5 : B1BFS: RX1BF Pin State bit (Digital Output mode only).
+ *                Reads as ‘0’ when RX1BF is configured as interrupt pin.
+ * bit 4 : B0BFS: RX0BF Pin State bit (Digital Output mode only).
+ *                Reads as ‘0’ when RX0BF is configured as interrupt pin.
+ * bit 3 : B1BFE: RX1BF Pin Function Enable bit.
+ *                1 = Pin function enabled, operation mode determined by B1BFM bit.
+ *                0 = Pin function disabled, pin goes to high-impedance state.
+ * bit 2 : B0BFE: RX0BF Pin Function Enable bit.
+ *                1 = Pin function enabled, operation mode determined by B0BFM bit.
+ *                0 = Pin function disabled, pin goes to high-impedance state.
+ * bit 1 : B1BFM: RX1BF Pin Operation Mode bit.
+ *                1 = Pin is used as interrupt when valid message loaded into RXB1.
+ *                0 = Digital Output mode.
+ * bit 0 : B0BFM: RX0BF Pin Operation Mode bit.
+ *                1 = Pin is used as interrupt when valid message loaded into RXB0.
+ *                0 = Digital Output mode.
+ * 
+ */
+#define REG_BFPCTRL ( 0x0CU )   /*!< RXnBF PIN CONTROL AND STATUS */
 
 #define REG_TXRTSCTRL                   ( 0x0DU )
-#define REG_CANSTAT                     ( 0x0EU )               /* CAN status.                      */
-#define REG_CANCTRL                     ( 0x0FU )               /* CAN control.                     */
+#define REG_CANSTAT                     ( 0x0EU )               /*!< CAN status     */
+#define REG_CANCTRL                     ( 0x0FU )               /*!< CAN control    */
 #define REG_RXF3SIDH                    ( 0x10U )
 #define REG_RXF3SIDL                    ( 0x11U )
 #define REG_RXF3EID8                    ( 0x12U )
@@ -65,11 +82,11 @@
 #define REG_RXM1SIDL                    ( 0x25U )
 #define REG_RXM1EID8                    ( 0x26U )
 #define REG_RXM1EID0                    ( 0x27U )
-#define REG_CNF3                        ( 0x28U )               /* CAN bus interface bit timing #3. */
-#define REG_CNF2                        ( 0x29U )               /* CAN bus interface bit timing #2. */
-#define REG_CNF1                        ( 0x2AU )               /* CAN bus interface bit timing #1. */
-#define REG_CANINTE                     ( 0x2BU )               /* CAN interrupt enables.           */
-#define REG_CANINTF                     ( 0x2CU )               /* CAN interrupt flags.             */
+#define REG_CNF3                        ( 0x28U )               /*!< CAN bus interface bit timing #3 */
+#define REG_CNF2                        ( 0x29U )               /*!< CAN bus interface bit timing #2 */
+#define REG_CNF1                        ( 0x2AU )               /*!< CAN bus interface bit timing #1 */
+#define REG_CANINTE                     ( 0x2BU )               /*!< CAN interrupt enables           */
+#define REG_CANINTF                     ( 0x2CU )               /*!< CAN interrupt flags             */
 #define REG_EFLG                        ( 0x2DU )
 #define REG_TXB0CTRL                    ( 0x30U )
 #define REG_TXB0SIDH                    ( 0x31U )
@@ -141,15 +158,18 @@
 #define REG_RXB1D5                      ( 0x7BU )
 #define REG_RXB1D6                      ( 0x7CU )
 #define REG_RXB1D7                      ( 0x7DU )
+/*! \} */
 
-/*--------------------------------------*/
-/* MCP2515 mask of register value.      */
-/*--------------------------------------*/
-#define MASKOF_OPMOD                    ( 0xE0U )               /* Operation mode.      */
-#define MASKOF_CANSTAT_ICOD             ( 0x0EU )               /* Inturrupt kind.      */
+/*! 
+ * \defgroup Mcp2515RegMask MCP2515 register mask 
+ */
+/*! \{ */
 
-#define MASKOF_CANCTRL_ABAT             ( 0x10U )               /* Abort all TX.        */
-#define MASKOF_CANCTRL_OSM              ( 0x08U )               /* One shot TX.         */
+#define MASKOF_OPMOD                    ( 0xE0U )               /*!< Operation mode      */
+#define MASKOF_CANSTAT_ICOD             ( 0x0EU )               /*!< Inturrupt kind      */
+
+#define MASKOF_CANCTRL_ABAT             ( 0x10U )               /*!< Abort send CAN message     */
+#define MASKOF_CANCTRL_OSM              ( 0x08U )               /*!< One shot send CAN message  */
 
 #define MASKOF_CANINT_MERRF             ( 0x80U )
 #define MASKOF_CANINT_WAKIF             ( 0x40U )
@@ -184,6 +204,7 @@
 #define MASKOF_SIDL_IDE                 ( 0x08U )
 #define MASKOF_RTR                      ( 0x40U )
 #define MASKOF_DLC                      ( 0x0FU )
+/*! \} */
 
 
 /*==================================================================*/
@@ -193,15 +214,19 @@
 /*--------------------------------------*/
 /* Index of CAN header on the register. */
 /*--------------------------------------*/
+/*! 
+ * \enum MCP2515_CANHDR
+ * \brief Buffer index of CAN id and DLC.
+ */
 enum MCP2515_CANHDR {
-    MCP2515_CANHDR_MINOF_IDX = 0,
-    MCP2515_CANHDR_SIDH = MCP2515_CANHDR_MINOF_IDX,
-    MCP2515_CANHDR_SIDL,
-    MCP2515_CANHDR_EID8,
-    MCP2515_CANHDR_EID0,
-    MCP2515_CANHDR_DLC,
-    MCP2515_CANHDR_MAXOF_IDX = MCP2515_CANHDR_DLC,
-    MCP2515_CANHDR_NUMOF_ITEMS
+    MCP2515_CANHDR_SIDH = 0,    /*! CAN id */
+    MCP2515_CANHDR_SIDL = 1,    /*! CAN id */
+    MCP2515_CANHDR_EID8 = 2,    /*! CAN id */
+    MCP2515_CANHDR_EID0 = 3,    /*! CAN id */
+    MCP2515_CANHDR_DLC = 4,     /*! DLC */
+    MCP2515_CANHDR_NUMOF_ITEMS = 5,
+    MCP2515_CANHDR_MINOF_IDX = MCP2515_CANHDR_SIDH,
+    MCP2515_CANHDR_MAXOF_IDX = MCP2515_CANHDR_DLC
 };
 
 

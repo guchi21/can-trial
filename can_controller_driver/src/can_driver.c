@@ -1,7 +1,7 @@
 #include "can_driver.h"
 #include "hardware/timer.h"
 #include "mcp2515.h"
-#include "pico_can.h"
+#include "hardware_manager.h"
 
 /* temp */
 #ifndef MCP2515_REGISTER_H
@@ -27,29 +27,32 @@ candrv_result_t candrv_init() {
 
         mcp2515_modbits_register( REG_CANINTE, MASKOF_CANINT_MERRF | MASKOF_CANINT_ERRIF | MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
         // End trial implements
+
     }
+
+    to_be_continued = ( to_be_continued && hw_set_irq_callback( HW_IRQ_CAUSE_CAN_CONTROLLER, mcp2515_cbk_can_controller ) );
 
     to_be_continued = ( to_be_continued && mcp2515_set_opmode( MCP2515_OPMODE_NORMAL ) ) ? true : false;
 
-    return to_be_continued ? CANDRV_SUCCESS : CANDRV_FAILURE;
+    return to_be_continued ? CD_SUCCESS : CD_FAILURE;
 }
 
-candrv_result_t candrv_get_rx_msg( const enum CANDRV_RX rx_idx, can_msg_t *const msg ) {
+candrv_result_t candrv_get_rx_msg( const enum CD_RX rx_idx, can_msg_t *const msg ) {
 
     return mcp2515_get_rx_msg( rx_idx, msg );
 }
 
-candrv_result_t candrv_set_tx_msg( const enum CANDRV_TX tx_idx,
-    const can_msg_t *const msg, const enum CANDRV_TX_PRIORITY priority ) {
+candrv_result_t candrv_set_tx_msg( const enum CD_TX tx_idx,
+    const can_msg_t *const msg, const enum CD_TX_PRIORITY priority ) {
 
     return mcp2515_set_tx_msg( tx_idx, msg, priority );
 }
 
-candrv_result_t candrv_set_send_req( const enum CANDRV_TX tx_idx ) {
+candrv_result_t candrv_set_send_req( const enum CD_TX tx_idx ) {
 
     return mcp2515_set_send_req( tx_idx );
 }
-candrv_result_t candrv_clr_send_req( const enum CANDRV_TX tx_idx ) {
+candrv_result_t candrv_clr_send_req( const enum CD_TX tx_idx ) {
 
     return mcp2515_clr_send_req( tx_idx );
 }
@@ -63,13 +66,13 @@ uint8_t candrv_get_numof_rx_err( void ) {
     return mcp2515_get_numof_rx_err();
 }
 
-enum CANDRV_TX candrv_get_available_tx( void ) {
+enum CD_TX candrv_get_available_tx( void ) {
 
-    for ( enum CANDRV_TX i = CANDRV_TX_MINOF_IDX; CANDRV_TX_NUMOF_ITEMS > i; i++ ) {
+    for ( enum CD_TX i = CD_TX_MINOF_IDX; CD_TX_NUMOF_ITEMS > i; i++ ) {
 
         if ( true ==  mcp2515_is_tx_available( i ) )
             return i;
     }
 
-    return CANDRV_TX_INVALID;
+    return CD_TX_INVALID;
 }

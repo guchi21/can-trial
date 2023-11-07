@@ -12,18 +12,18 @@ project( can_trial
 # Initialize SDK.
 pico_sdk_init()
 
-add_subdirectory( pico_can )
-add_subdirectory( can_driver )
+add_subdirectory( hardware_manager )
+add_subdirectory( can_controller_driver )
 
 add_executable( can_trial main.c )
 
 target_link_libraries( can_trial
     PRIVATE pico_stdlib
-    PRIVATE can_driver
+    PRIVATE can_controller_driver
 )
 
 target_compile_features( can_trial PRIVATE cxx_std_11 )
 
-pico_enable_stdio_usb( can_trial 1 )
+pico_enable_stdio_usb( can_trial 0 )
 pico_enable_stdio_uart( can_trial 1 )
 pico_add_extra_outputs( can_trial )
