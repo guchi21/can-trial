@@ -186,8 +186,6 @@ uint8_t mcp2515_get_numof_rx_err( void ) {
     return mcp2515_read_register( REG_REC );
 }
 
-
-// todo:trial
 void mcp2515_clear_all_send_req_if_error( void ) {
 
     /* Get status of send request. */
