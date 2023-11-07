@@ -56,7 +56,7 @@ cd_result_t mcp2515_set_baudrate( const enum MCP2515_BAUDRATE baudrate );
 uint8_t mcp2515_get_numof_tx_err( void );
 uint8_t mcp2515_get_numof_rx_err( void );
 
-void mcp2515_cbk_can_controller( uint32_t event_mask );
+void mcp2515_dispatch_irq( uint32_t event_mask );
 
 void mcp2515_clear_all_send_req_if_error( void );
 

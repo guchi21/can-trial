@@ -218,6 +218,8 @@ cd_result_t cd_init( void ) {
 
     hw_init();
 
+    go_on = (bool)( go_on && ( HW_SUCCESS == hw_set_irq_callback( mcp2515_dispatch_irq ) ) );
+
     go_on = (bool)( go_on && ( CD_SUCCESS == mcp2515_reset() ) );
 
     go_on = (bool)( go_on && ( CD_SUCCESS == mcp2515_set_baudrate( MCP2515_BAUDRATE_1000KBPS ) ) );

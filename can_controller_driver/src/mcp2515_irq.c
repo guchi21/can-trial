@@ -101,7 +101,7 @@ void static cbk_change_error_status( void ) {
     mcp2515_modbits_register( REG_CANINTF, MASKOF_CANINT_ERRIF, 0U );
 }
 
-void mcp2515_cbk_can_controller( uint32_t event_mask ) {
+void mcp2515_dispatch_irq( uint32_t event_mask ) {
     
     const uint8_t canstat = mcp2515_read_register( REG_CANSTAT );
     const uint8_t reason = (uint8_t)( (uint8_t)( canstat & MASKOF_CANSTAT_ICOD) >> 1 );
