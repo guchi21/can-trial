@@ -214,17 +214,17 @@ void mcp2515_clear_all_send_req_if_error( void ) {
 
 cd_result_t cd_init( void ) {
 
-    bool to_be_continued = true;
+    bool go_on = true;
 
     hw_init();
 
-    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_reset() );
+    go_on = (bool)( go_on && ( CD_SUCCESS == mcp2515_reset() ) );
 
-    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_set_baudrate( MCP2515_BAUDRATE_1000KBPS ) );
+    go_on = (bool)( go_on && ( CD_SUCCESS == mcp2515_set_baudrate( MCP2515_BAUDRATE_1000KBPS ) ) );
 
-    if ( to_be_continued ) {
+    if ( go_on ) {
 
-        /* Receive all message */
+        /* Receive filter is none */
         mcp2515_modbits_register( REG_RXB0CTRL, MASKOF_RXBCTRL_RXM, 0U );
 
         /* Allow interruptions */
@@ -232,7 +232,7 @@ cd_result_t cd_init( void ) {
             MASKOF_CANINT_RX0IF | MASKOF_CANINT_RX1IF, 0xFFU );
     }
 
-    to_be_continued = to_be_continued && ( CD_SUCCESS == mcp2515_set_opmode( MCP2515_OPMODE_NORMAL ) );
+    go_on = (bool)( go_on && ( CD_SUCCESS == mcp2515_set_opmode( MCP2515_OPMODE_NORMAL ) ) );
 
-    return to_be_continued ? CD_SUCCESS : CD_FAILURE;
+    return go_on ? CD_SUCCESS : CD_FAILURE;
 }
